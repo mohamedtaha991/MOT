@@ -1178,9 +1178,10 @@ new Chart(document.getElementById('chartIrap'), {
   });
 
   // ---- DBSCAN prototype on density grid
-  const eps = 0.42;
-  const minPts = 3;
-  const pts = DENSITY_GRID.map((p,i)=>({ ...p, i }));
+  const eps = 0.22;
+  const minPts = 5;
+  const minCount = 15;
+  const pts = DENSITY_GRID.filter(p => p.count >= minCount).map((p,i)=>({ ...p, i }));
   const labels = Array(pts.length).fill(undefined);
   let clusterId = 0;
 
