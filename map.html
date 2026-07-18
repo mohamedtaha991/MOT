@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مستكشف الحوادث الجغرافي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
+<link rel="stylesheet" href="MOT_App/GeoPortsal/WWWROOT/CSS/map/calcite.css">
+<link rel="stylesheet" href="MOT_App/GeoPortsal/WWWROOT/CSS/map.css">
+<style>
+  :root {
+    --bg:#0E1217;
+    --bg-panel:#161B22;
+    --bg-panel-2:#1C232C;
+    --border:#2A323C;
+    --border-soft:#20272F;
+    --text:#EDF0F3;
+    --text-muted:#8B94A3;
+    --text-faint:#5B6472;
+    --amber:#FFB020;
+    --amber-dim:rgba(255,176,32,.16);
+    --red:#E5514F;
+    --green:#33A17A;
+    --blue:#4C8DC9;
+    --blue-dim:rgba(76,141,201,.18);
+  }
+
+  html, body, #viewDiv {
+    width: 100%;
+    height: 100% !important;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif;
+    background:
+      radial-gradient(ellipse 900px 500px at 85% -15%, rgba(255,176,32,.12), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 5% 0%, rgba(76,141,201,.10), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #loader {
+    background: rgba(14,18,23,.95) !important;
+    color: var(--text) !important;
+  }
+
+  .topbar {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    z-index: 30;
+    background: linear-gradient(160deg, rgba(22,27,34,.94), rgba(28,35,44,.92));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 14px;
+    box-shadow: 0 12px 28px rgba(0,0,0,.35);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    backdrop-filter: blur(8px);
+  }
+
+  /* Keep the right panel below the title bar to avoid overlap */
+  .esri-ui-top-right .search-panel {
+    margin-top: 72px !important;
+  }
+
+  .topbar strong {
+    font-family: "Tajawal", "IBM Plex Sans Arabic", sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: .005em;
+  }
+
+  .topbar a {
+    font-family: "IBM Plex Sans Arabic", sans-serif;
+    color: #14181e;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 12px;
+    background: var(--amber);
+    border-radius: 999px;
+    padding: 5px 11px;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .topbar a:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(255,176,32,.28);
+  }
+
+  .mapIcons {
+    color: var(--text) !important;
+    background: rgba(22,27,34,.9) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    width: 35px !important;
+    height: 35px !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,.28);
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 0 !important;
+  }
+
+  .mapIcons:hover {
+    border-color: var(--amber) !important;
+    color: var(--amber) !important;
+  }
+
+  /* Fallback icons to ensure visibility even if Esri icon font fails */
+  #layersButton::before,
+  #LegedButton::before,
+  #BasemapButton::before,
+  #PrintButton::before,
+  #areaButton::before,
+  #distanceButton::before {
+    font-size: 15px;
+    line-height: 1;
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+  }
+
+  #layersButton::before { content: "🗂"; }
+  #LegedButton::before { content: "🧭"; }
+  #BasemapButton::before { content: "🗺"; }
+  #PrintButton::before { content: "🖨"; }
+  #areaButton::before { content: "▧"; }
+  #distanceButton::before { content: "📏"; }
+
+  .widgetsBox,
+  .Legend-container,
+  .layer-list-container,
+  .Basemap-container,
+  .Print-container {
+    color: var(--text) !important;
+    background: rgba(22,27,34,.96) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 26px rgba(0,0,0,.34) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  .Widget-title {
+    color: var(--amber) !important;
+    font-weight: 800 !important;
+    padding: 10px 12px 8px !important;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 0 !important;
+  }
+
+  .search-panel {
+    background: linear-gradient(170deg, rgba(22,27,34,.96), rgba(28,35,44,.95)) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 18px 38px rgba(0,0,0,.38) !important;
+    color: var(--text) !important;
+    padding: 10px 10px 9px !important;
+    width: 278px !important;
+    max-width: min(86vw, 278px) !important;
+    max-height: calc(100vh - 104px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .search-panel::-webkit-scrollbar { width: 6px; }
+  .search-panel::-webkit-scrollbar-track { background: rgba(255,255,255,.05); border-radius: 999px; }
+  .search-panel::-webkit-scrollbar-thumb { background: rgba(255,176,32,.45); border-radius: 999px; }
+
+  .search-panel p {
+    margin: 0 0 8px;
+    color: var(--text);
+    font-family: "Tajawal", "IBM Plex Sans Arabic", sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+  }
+
+  .search-panel .row { margin-bottom: 7px; }
+
+  .report-row {
+    width: 100%;
+    display: block;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border-soft);
+  }
+
+  #SearchCard > .row:not(.report-row) {
+    width: calc(50% - 4px);
+    display: inline-block;
+    vertical-align: top;
+  }
+
+  .search-panel label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 700;
+    width: 100%;
+    line-height: 1.35;
+  }
+
+  .search-panel input,
+  .search-panel select,
+  .period-select {
+    width: 100%;
+    margin-top: 4px;
+    padding: 7px 8px;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px;
+    color: var(--text);
+    background: #11161D !important;
+    font-family: "IBM Plex Sans Arabic", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    box-sizing: border-box;
+  }
+
+  #autocomplete::placeholder {
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+
+  .search-panel input:focus,
+  .search-panel select:focus,
+  .period-select:focus {
+    outline: none;
+    border-color: var(--amber) !important;
+    box-shadow: 0 0 0 2px rgba(255,176,32,.18);
+  }
+
+  .period-selector-wrapper { margin-bottom: 6px; position: relative; }
+
+  .period-toggle-link {
+    font-family: "IBM Plex Sans Arabic", sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 9px;
+    background: linear-gradient(135deg, rgba(76,141,201,.28), rgba(76,141,201,.15));
+    color: #DCEBFA;
+    border: 1px solid rgba(76,141,201,.45);
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .period-arrow { margin-right: auto; font-size: 11px; transition: transform .25s; }
+  .period-arrow.open { transform: rotate(180deg); }
+
+  .period-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 7px);
+    right: 0;
+    left: 0;
+    background: #131922;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 10px 20px rgba(0,0,0,.35);
+    z-index: 9999;
+  }
+
+  .period-dropdown.open { display: block; }
+
+  .period-dropdown-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+
+  .period-label-text { font-size: 12px; font-weight: 700; color: var(--text-muted); min-width: 38px; }
+
+  .period-apply-btn {
+    font-family: "IBM Plex Sans Arabic", sans-serif;
+    width: 100%;
+    padding: 8px;
+    background: linear-gradient(135deg, #D08A1B, #FFB020);
+    color: #14181e;
+    border: none;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 7px;
+    width: 100%;
+    clear: both;
+  }
+
+  .btn-row button {
+    font-family: "IBM Plex Sans Arabic", sans-serif;
+    flex: 1;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    padding: 8px 7px;
+    cursor: pointer;
+    font-weight: 800;
+    color: #14181e;
+    background: var(--amber);
+    transition: transform .14s ease;
+  }
+
+  .btn-row button:hover { transform: translateY(-1px); }
+
+  .btn-row button:last-child {
+    color: var(--text);
+    background: transparent;
+    border-color: var(--border);
+  }
+
+  .search-panel hr {
+    border: none;
+    border-top: 1px solid var(--border-soft);
+    margin: 8px 0;
+    clear: both;
+  }
+
+  .stats-scroll-area {
+    overflow-y: auto;
+    max-height: 124px;
+    margin-top: 6px;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,176,32,.65) rgba(255,255,255,.06);
+  }
+
+  .stats-scroll-area::-webkit-scrollbar { width: 7px; }
+  .stats-scroll-area::-webkit-scrollbar-track { background: rgba(255,255,255,.06); border-radius: 10px; }
+  .stats-scroll-area::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(255,176,32,.9), rgba(229,81,79,.85));
+    border-radius: 10px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .stat-card {
+    border-radius: 9px;
+    padding: 7px 4px;
+    text-align: center;
+    background: linear-gradient(180deg, #1B2430 0%, #18202A 100%);
+    border: 1px solid var(--border);
+  }
+
+  .stat-value {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--blue);
+    font-family: "JetBrains Mono", Consolas, monospace;
+    letter-spacing: .01em;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-weight: 600;
+  }
+
+  .stat-total .stat-value { color: var(--amber); font-size: 13px; }
+  .stat-dead .stat-value { color: var(--red); }
+  .stat-injuries .stat-value { color: #EC7C4B; }
+  .stat-damages .stat-value { color: #9B7ED9; }
+  .stat-vehicles .stat-value { color: var(--green); }
+  .stat-cost .stat-value { color: #D7DDE6; font-size: 10.8px; }
+
+  #search-lable {
+    display: none;
+    margin-bottom: 6px;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  .esri-popup,
+  .esri-popup__main-container,
+  .esri-widget,
+  .esri-menu,
+  .esri-search,
+  .esri-component {
+    font-family: "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif !important;
+  }
+
+  .esri-search__input,
+  .esri-input,
+  .esri-select {
+    font-family: "IBM Plex Sans Arabic", sans-serif !important;
+    font-size: 13px !important;
+  }
+
+  .esri-widget__heading,
+  .esri-popup__header-title {
+    font-family: "Tajawal", "IBM Plex Sans Arabic", sans-serif !important;
+    font-weight: 800 !important;
+  }
+
+  @media (max-width: 900px) {
+    .topbar {
+      top: 10px;
+      right: 10px;
+      left: 10px;
+      justify-content: space-between;
+      padding: 9px 10px;
+    }
+
+    .topbar strong { font-size: 12.5px; }
+    .topbar a { font-size: 11.5px; padding: 5px 10px; }
+
+    .search-panel {
+      width: min(88vw, 292px) !important;
+      max-width: min(88vw, 292px) !important;
+      max-height: calc(100vh - 96px) !important;
+    }
+
+    .esri-ui-top-right .search-panel {
+      margin-top: 82px !important;
+    }
+
+    #SearchCard > .row:not(.report-row) {
+      width: 100%;
+      display: block;
+    }
+
+    .stats-scroll-area { max-height: 130px; }
+  }
+</style>
+</head>
+<body>
+<calcite-loader id="loader" text="جاري تحميل الخريطة" active></calcite-loader>
+<div class="topbar">
+  <strong>مستكشف الحوادث الجغرافي</strong>
+  <a href="index.html">العودة للداشبورد</a>
+</div>
+
+<button class="action-button esri-icon-layers mapIcons" id="layersButton" type="button" title="الطبقات"></button>
+<button class="action-button esri-icon-legend mapIcons" id="LegedButton" type="button" title="مفتاح الخريطة"></button>
+<button class="action-button esri-icon-basemap mapIcons" id="BasemapButton" type="button" title="خرائط الاساس"></button>
+<button class="action-button esri-icon-printer mapIcons" id="PrintButton" type="button" title="طباعة الخريطة"></button>
+<button class="action-button esri-icon-measure-area mapIcons" id="areaButton" type="button" title="قياس المساحات"></button>
+<button class="action-button esri-icon-measure-line mapIcons" id="distanceButton" type="button" title="قياس الاطوال"></button>
+
+<div class="Legend-container widgetsBox" id="Legend-container">
+  <div class="Widget-title">مفتاح الخريطة</div>
+  <div id="LegendContainer"></div>
+</div>
+<div class="layer-list-container widgetsBox" id="layer-list-container">
+  <div class="Widget-title">طبقات الخريطة</div>
+  <div id="layerListContainer" class="layerListContainer widgetsBox"></div>
+</div>
+<div class="Basemap-container widgetsBox" id="Basemap-container">
+  <div class="Widget-title">خرائط الاساس</div>
+  <div id="BasemapContainer"></div>
+</div>
+<div class="Print-container widgetsBox" id="Print-container">
+  <div class="Widget-title">الطباعة</div>
+  <div id="PrintContainer"></div>
+</div>
+
+<div id="SearchCard" class="search-panel" hidden>
+  <div class="period-selector-wrapper">
+    <a href="#" id="periodToggle" class="period-toggle-link" onclick="togglePeriodDropdown(event)">
+      <span class="period-icon">📅</span>
+      <span id="periodLabel">اختر الفترة الزمنية</span>
+      <span class="period-arrow" id="periodArrow">&#9660;</span>
+    </a>
+    <div id="periodDropdown" class="period-dropdown">
+      <div class="period-dropdown-row">
+        <label class="period-label-text">السنة</label>
+        <select id="YearSelect" class="period-select">
+          <option value="">كل السنوات</option>
+          <option value="2020">2020</option>
+          <option value="2021">2021</option>
+          <option value="2022">2022</option>
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
+      </div>
+      <div class="period-dropdown-row">
+        <label class="period-label-text">الشهر</label>
+        <select id="MonthSelect" class="period-select">
+          <option value="">كل الأشهر</option>
+          <option value="1">يناير</option>
+          <option value="2">فبراير</option>
+          <option value="3">مارس</option>
+          <option value="4">أبريل</option>
+          <option value="5">مايو</option>
+          <option value="6">يونيو</option>
+          <option value="7">يوليو</option>
+          <option value="8">أغسطس</option>
+          <option value="9">سبتمبر</option>
+          <option value="10">أكتوبر</option>
+          <option value="11">نوفمبر</option>
+          <option value="12">ديسمبر</option>
+        </select>
+      </div>
+      <button id="btnpreiodFilter" class="period-apply-btn">تطبيق</button>
+    </div>
+  </div>
+
+  <hr>
+  <p>البحث عن حوادث الطرق</p>
+
+  <div class="row report-row">
+    <label>
+      ابحث برقم التقرير
+      <input id="autocomplete" type="text" list="reportNumberList" placeholder="اكتب رقم التقرير">
+      <datalist id="reportNumberList"></datalist>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>المنطقة
+      <select id="AreaSelect">
+        <option value="">إختار</option>
+        <option value="9">الباحة</option>
+        <option value="7">الجوف</option>
+        <option value="5">الحدود الشمالية</option>
+        <option value="1">الرياض</option>
+        <option value="2">الشرقية</option>
+        <option value="4">القصيم</option>
+        <option value="12">المدينة المنورة</option>
+        <option value="8">تبوك</option>
+        <option value="14">جازان</option>
+        <option value="3">حائل</option>
+        <option value="13">عسير</option>
+        <option value="10">مكة المكرمة</option>
+        <option value="6">نجران</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>سبب الحادث
+      <select id="accident-cause">
+        <option value="">إختار</option>
+        <option value="1">الطريق</option>
+        <option value="2">المركبة</option>
+        <option value="3">السائق</option>
+        <option value="4">أخرى</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>إتجاه الطريق
+      <select id="Road-Dir">
+        <option value="">إختار</option>
+        <option value="1">رئيسي</option>
+        <option value="2">عكسي</option>
+        <option value="3">وسطى</option>
+        <option value="4">مخرج</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>نوع الحادث
+      <select id="accident-type">
+        <option value="">إختار</option>
+        <option value="1">احتراق</option>
+        <option value="3">ارتطام</option>
+        <option value="4">انحراف</option>
+        <option value="5">إنقلاب</option>
+        <option value="6">انهيار جسر</option>
+        <option value="7">تصادم</option>
+        <option value="8">دهس مشاة</option>
+        <option value="9">سقوط من حوض الوانيت</option>
+        <option value="10">صدم حيوان</option>
+        <option value="11">صدم خطر جانبي</option>
+        <option value="13">صدم وجه لوجه</option>
+        <option value="14">صدم من الخلف</option>
+        <option value="12">غير معروف</option>
+        <option value="2">أخرى</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>تصنيف الحادث
+      <select id="accident-cat">
+        <option value="">إختار</option>
+        <option value="1">وفيات</option>
+        <option value="2">اصابات</option>
+        <option value="3">تلفيات</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="row">
+    <label>نوع التصادم
+      <select id="Impact-type">
+        <option value="">إختار</option>
+        <option value="1">صدم وجه لوجه</option>
+        <option value="2">تصادم</option>
+        <option value="3">اصطدام جانبي الاتجاه المعاكس</option>
+        <option value="4">اصطدام جانبي في نفس الاتجاه</option>
+        <option value="6">صدم بزاوية</option>
+        <option value="7">صدم بزاوية 90 درجة</option>
+        <option value="8">صدم جانبي</option>
+        <option value="9">صدم جسم ثابت</option>
+        <option value="10">صدم جسم علوي</option>
+        <option value="11">صدم خطر جانبي</option>
+        <option value="12">صدم من الخلف</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="btn-row">
+    <button id="SearchButton">بحث</button>
+    <button id="CancelSearchButton">الغاء</button>
+  </div>
+
+  <hr>
+  <div class="stats-scroll-area">
+    <div id="search-lable"></div>
+    <div id="statsPanel">
+      <div class="stats-grid">
+        <div class="stat-card stat-total"><div class="stat-value" id="stat-total">—</div><div class="stat-label">إجمالي الحوادث</div></div>
+        <div class="stat-card stat-dead"><div class="stat-value" id="stat-dead">—</div><div class="stat-label">الوفيات</div></div>
+        <div class="stat-card stat-injuries"><div class="stat-value" id="stat-injuries">—</div><div class="stat-label">الإصابات</div></div>
+        <div class="stat-card stat-damages"><div class="stat-value" id="stat-damages">—</div><div class="stat-label">الأضرار</div></div>
+        <div class="stat-card stat-vehicles"><div class="stat-value" id="stat-vehicles">—</div><div class="stat-label">المركبات</div></div>
+        <div class="stat-card stat-cost"><div class="stat-value" id="stat-cost">—</div><div class="stat-label">التكلفة (ريال)</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="viewDiv" hidden></div>
+
+<script>
+  var customModulesUrl = new URL("./Modules", window.location.href).toString();
+  window.dojoConfig = {
+    packages: [{ name: "custom", location: customModulesUrl }]
+  };
+</script>
+
+<script src="https://js.arcgis.com/calcite-components/2.10.1/calcite.esm.js" type="module"></script>
+<script>
+var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcUia736qKCfE1DKPstGroaQf3qJetC9WM_n6hpRP3ELZk9e96EpkhDZyokSN3f4troYa3RDoGI59qPWZ3HzXV-KlSDO-UtbALbpV76oGuPbYAYBYqwjfnwxd2Uzqgjz0I-WTW_DUkxHaZVR9WM3_JBmSUzhg5f0L45ilImQg4VTrx5NsYI9sXB6dwg19N9Bwyzxn5IxbKHfecBOnMPIuQDhvRpWRgT3gKq4PRgNWIHI8iFgqB3kTfOhO22gglnqFCJX1OLgAU46H8A.AT1_FX23TRQR" };
+</script>
+ <script src="https://js.arcgis.com/4.30/"></script>
+<script>
+  function togglePeriodDropdown(e) {
+    e.preventDefault();
+    var dropdown = document.getElementById('periodDropdown');
+    var arrow = document.getElementById('periodArrow');
+    var isOpen = dropdown.classList.contains('open');
+    dropdown.classList.toggle('open', !isOpen);
+    arrow.classList.toggle('open', !isOpen);
+  }
+
+  document.addEventListener('click', function (e) {
+    var wrapper = document.querySelector('.period-selector-wrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+      document.getElementById('periodDropdown').classList.remove('open');
+      document.getElementById('periodArrow').classList.remove('open');
+    }
+  });
+
+  function updateResultStats(features) {
+    var total = features.length;
+    var deadSum = 0, injuriesSum = 0, damagesSum = 0, costSum = 0, vehiclesSum = 0;
+    features.forEach(function(f) {
+      deadSum += (f.attributes.DeadNumber || 0);
+      injuriesSum += (f.attributes.InjuriesNumber || 0);
+      damagesSum += (f.attributes.DamagesNumber || 0);
+      costSum += (f.attributes.Costaccident || 0);
+      vehiclesSum += (f.attributes.VehiclesNumber || 0);
+    });
+
+    document.getElementById('stat-total').innerText = total.toLocaleString('ar-SA');
+    document.getElementById('stat-dead').innerText = Math.round(deadSum).toLocaleString('ar-SA');
+    document.getElementById('stat-injuries').innerText = Math.round(injuriesSum).toLocaleString('ar-SA');
+    document.getElementById('stat-damages').innerText = Math.round(damagesSum).toLocaleString('ar-SA');
+    document.getElementById('stat-cost').innerText = Math.round(costSum).toLocaleString('ar-SA');
+    document.getElementById('stat-vehicles').innerText = Math.round(vehiclesSum).toLocaleString('ar-SA');
+  }
+
+  require([
+    "esri/intl", "esri/Map", "esri/Basemap", "esri/views/MapView", "esri/widgets/Home",
+    "esri/widgets/Search", "esri/widgets/BasemapGallery", "esri/widgets/LayerList", "esri/layers/WebTileLayer",
+    "esri/widgets/Legend", "esri/widgets/DistanceMeasurement2D", "esri/widgets/AreaMeasurement2D",
+    "esri/widgets/Print", "esri/widgets/Compass", "esri/geometry/Multipoint", "esri/layers/GraphicsLayer", "custom/main"
+  ], function (
+    intl, Map, Basemap, MapView, Home, Search, BasemapGallery, LayerList, WebTileLayer,
+    Legend, DistanceMeasurement2D, AreaMeasurement2D, Print, Compass, Multipoint, GraphicsLayer, main
+  ) {
+    async function initMap() {
+      var PeriodwhereClause = '1=1';
+      intl.setLocale("ar");
+
+      const googleLayer = new WebTileLayer({
+        urlTemplate: "https://mt1.google.com/vt/lyrs=s&x={col}&y={row}&z={level}",
+        copyright: "© Google"
+      });
+      const googleLabels = new WebTileLayer({
+        urlTemplate: "https://mt1.google.com/vt/lyrs=h&x={col}&y={row}&z={level}",
+        copyright: "© Google",
+        minScale: 30000,
+        maxScale: 0
+      });
+      const googleBasemap = new Basemap({
+        baseLayers: [googleLayer, googleLabels],
+        title: "خرائط جووجل",
+        id: "googleBasemap"
+      });
+
+      const map = new Map({ basemap: googleBasemap });
+
+      var AccidenPoints = await main.Initiat_Accident_Points();
+      var AdministrationBorder = await main.Initiat_AdministrationBoarder();
+      var Roads = await main.Initiat_Roads();
+      map.add(AdministrationBorder);
+      map.add(Roads);
+      map.add(AccidenPoints);
+
+      const view = new MapView({
+        map,
+        container: "viewDiv",
+        center: [45.459879, 24.182213],
+        zoom: 6,
+        popup: {
+          dockOptions: {
+            buttonEnabled: true,
+            breakpoint: false,
+            position: "top-left"
+          }
+        }
+      });
+
+      if (window.devicePixelRatio > 1.25) { view.zoom = 5; }
+      view.popup.dockEnabled = true;
+      view.popup.actions = [];
+
+      let homeWidget = new Home({ view: view });
+      let compassWidget = new Compass({ view: view });
+      const searchWidget = new Search({ view: view, placeholder: "ابحث عن المواقع" });
+
+      view.ui.add(searchWidget, "top-left");
+      view.ui.add(homeWidget, "top-left");
+      view.ui.add(compassWidget, "top-left");
+      view.ui.move("zoom", "top-left");
+      view.ui.add(document.getElementById('layersButton'), "top-left");
+      view.ui.add(document.getElementById('LegedButton'), "top-left");
+      view.ui.add(document.getElementById('BasemapButton'), "top-left");
+      view.ui.add(document.getElementById('PrintButton'), "top-left");
+      view.ui.add(document.getElementById('areaButton'), "top-left");
+      view.ui.add(document.getElementById('distanceButton'), "top-left");
+      view.ui.add(document.getElementById('SearchCard'), "top-right");
+
+      new LayerList({
+        view,
+        dragEnabled: true,
+        visibilityAppearance: "checkbox",
+        container: "layerListContainer"
+      });
+
+      new Legend({ view, container: "LegendContainer" });
+
+      const basemaps = new BasemapGallery({
+        view,
+        source: [
+          googleBasemap,
+          Basemap.fromId("streets"),
+          Basemap.fromId("satellite"),
+          Basemap.fromId("hybrid"),
+          Basemap.fromId("topo"),
+          Basemap.fromId("gray"),
+          Basemap.fromId("dark-gray"),
+          Basemap.fromId("oceans"),
+          Basemap.fromId("terrain"),
+          Basemap.fromId("osm")
+        ],
+        container: "BasemapContainer"
+      });
+
+      new Print({
+        view,
+        container: "PrintContainer",
+        printServiceUrl: "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
+      });
+
+      const distanceMeasurement2D = new DistanceMeasurement2D({ view, visible: false });
+      const areaMeasurement2D = new AreaMeasurement2D({ view, visible: false });
+
+      function HideAllWidgets() {
+        document.getElementById("layer-list-container").style.display = "none";
+        document.getElementById("Legend-container").style.display = "none";
+        document.getElementById("Basemap-container").style.display = "none";
+        document.getElementById("Print-container").style.display = "none";
+      }
+
+      document.getElementById("LegedButton").addEventListener("click", function() {
+        HideAllWidgets();
+        document.getElementById("Legend-container").style.display = "block";
+      });
+      document.getElementById("layersButton").addEventListener("click", function() {
+        HideAllWidgets();
+        document.getElementById("layer-list-container").style.display = "block";
+      });
+      document.getElementById("BasemapButton").addEventListener("click", function() {
+        HideAllWidgets();
+        document.getElementById("Basemap-container").style.display = "block";
+      });
+      document.getElementById("PrintButton").addEventListener("click", function() {
+        HideAllWidgets();
+        document.getElementById("Print-container").style.display = "block";
+      });
+
+      function setActiveButton(selectedButton) {
+        view.focus();
+        var elements = document.getElementsByClassName("active");
+        for (var i = 0; i < elements.length; i++) elements[i].classList.remove("active");
+        if (selectedButton) selectedButton.classList.add("active");
+      }
+
+      function setActiveWidget(type) {
+        switch (type) {
+          case "distance":
+            areaMeasurement2D.visible = false;
+            distanceMeasurement2D.visible = true;
+            distanceMeasurement2D.viewModel.start();
+            setActiveButton(document.getElementById("distanceButton"));
+            break;
+          case "area":
+            distanceMeasurement2D.visible = false;
+            areaMeasurement2D.visible = true;
+            areaMeasurement2D.viewModel.start();
+            setActiveButton(document.getElementById("areaButton"));
+            break;
+          default:
+            areaMeasurement2D.visible = false;
+            distanceMeasurement2D.visible = false;
+            break;
+        }
+      }
+
+      document.getElementById("distanceButton").addEventListener("click", function () {
+        HideAllWidgets();
+        setActiveWidget(this.classList.contains("active") ? null : "distance");
+      });
+      document.getElementById("areaButton").addEventListener("click", function () {
+        HideAllWidgets();
+        setActiveWidget(this.classList.contains("active") ? null : "area");
+      });
+
+      const Region_graphicsLayer = new GraphicsLayer();
+      map.add(Region_graphicsLayer);
+      Region_graphicsLayer.listMode = "hide";
+
+      const SelectedParcelpoint_graphicsLayer = new GraphicsLayer();
+      map.add(SelectedParcelpoint_graphicsLayer);
+      SelectedParcelpoint_graphicsLayer.listMode = "hide";
+
+      document.getElementById("AreaSelect").addEventListener("change", function () {
+        const value = this.value;
+        if (value) {
+          main.ZoomToRegion(Region_graphicsLayer, view, AdministrationBorder, value);
+        } else {
+          homeWidget.go();
+          Region_graphicsLayer.removeAll();
+        }
+      });
+
+      function getSearchWhereClause() {
+        var area = document.getElementById('AreaSelect').value;
+        var accidentCause = document.getElementById('accident-cause').value;
+        var accidentCat = document.getElementById('accident-cat').value;
+        var impactType = document.getElementById('Impact-type').value;
+        var roadDir = document.getElementById('Road-Dir').value;
+        var accidentType = document.getElementById('accident-type').value;
+
+        var q = area ? "RegionName=" + area : "1=1";
+        if (accidentCause) q += " and AccidantCause=" + accidentCause;
+        if (accidentCat) q += " and Accidantcatogry=" + accidentCat;
+        if (accidentType) q += " and AccidentTypeAr=" + accidentType;
+        if (roadDir) q += " and HighwayDirectionAr=" + roadDir;
+        if (impactType) q += " and ImpactType=" + impactType;
+
+        return PeriodwhereClause + " and " + q;
+      }
+
+      document.getElementById('SearchButton').addEventListener('click', function () {
+        var reportNo = document.getElementById('autocomplete').value.trim();
+
+        if (reportNo) {
+          AccidenPoints.definitionExpression = "ReportNumber='" + reportNo.replace(/'/g, "''") + "'";
+          AccidenPoints.queryFeatures().then(function (results) {
+            var features = results.features || [];
+            updateResultStats(features);
+            if (features.length > 0) {
+              view.goTo({ target: features[0].geometry, zoom: 15 });
+              view.popup.open({ features: [features[0]], location: features[0].geometry });
+            }
+          });
+          return;
+        }
+
+        var query = getSearchWhereClause();
+        AccidenPoints.definitionExpression = query;
+        AccidenPoints.queryFeatures().then(function (results) {
+          var features = results.features || [];
+          document.getElementById('search-lable').style.display = 'block';
+          updateResultStats(features);
+          if (features.length > 0) view.goTo(features.map(function (f) { return f.geometry; }));
+        });
+      });
+
+      document.getElementById('CancelSearchButton').addEventListener('click', function () {
+        document.getElementById('AreaSelect').value = "";
+        document.getElementById('accident-cause').value = "";
+        document.getElementById('Road-Dir').value = "";
+        document.getElementById('accident-type').value = "";
+        document.getElementById('accident-cat').value = "";
+        document.getElementById('Impact-type').value = "";
+        document.getElementById('autocomplete').value = "";
+
+        Region_graphicsLayer.removeAll();
+        SelectedParcelpoint_graphicsLayer.removeAll();
+        view.popup.close();
+        homeWidget.go();
+        document.getElementById('search-lable').style.display = 'none';
+
+        AccidenPoints.definitionExpression = PeriodwhereClause;
+        AccidenPoints.queryFeatures({
+          where: PeriodwhereClause,
+          outFields: ['DeadNumber', 'InjuriesNumber', 'DamagesNumber', 'Costaccident', 'VehiclesNumber'],
+          maxRecordCountFactor: 5
+        }).then(function(allResults) {
+          updateResultStats(allResults.features || []);
+        });
+      });
+
+      function ApplyPeriodFilter(year) {
+        var yearVal = year || document.getElementById('YearSelect').value;
+        if (year) document.getElementById('YearSelect').value = year;
+
+        var month = document.getElementById('MonthSelect').value;
+        var monthNames = {
+          '1':'يناير','2':'فبراير','3':'مارس','4':'أبريل','5':'مايو','6':'يونيو',
+          '7':'يوليو','8':'أغسطس','9':'سبتمبر','10':'أكتوبر','11':'نوفمبر','12':'ديسمبر'
+        };
+
+        var label = (yearVal || 'كل السنوات') + ' — ' + (month ? monthNames[month] : 'كل الأشهر');
+        document.getElementById('periodLabel').innerText = label;
+        document.getElementById('periodDropdown').classList.remove('open');
+        document.getElementById('periodArrow').classList.remove('open');
+
+        if (yearVal && month) {
+          var y = parseInt(yearVal, 10), m = parseInt(month, 10);
+          var nextMonth = m === 12 ? 1 : m + 1;
+          var nextYear = m === 12 ? y + 1 : y;
+          var startStr = y + '-' + String(m).padStart(2, '0') + '-01 00:00:00';
+          var endStr = nextYear + '-' + String(nextMonth).padStart(2, '0') + '-01 00:00:00';
+          PeriodwhereClause = "AccidentDate >= date '" + startStr + "' AND AccidentDate < date '" + endStr + "'";
+        } else if (yearVal) {
+          var yy = parseInt(yearVal, 10);
+          PeriodwhereClause = "AccidentDate >= date '" + yy + "-01-01 00:00:00' AND AccidentDate < date '" + (yy + 1) + "-01-01 00:00:00'";
+        } else if (month) {
+          PeriodwhereClause = "EXTRACT(MONTH FROM AccidentDate) = " + parseInt(month, 10);
+        } else {
+          PeriodwhereClause = '1=1';
+        }
+
+        AccidenPoints.definitionExpression = PeriodwhereClause;
+        document.getElementById('search-lable').style.display = 'block';
+        AccidenPoints.queryFeatures({
+          where: PeriodwhereClause,
+          outFields: ['DeadNumber', 'InjuriesNumber', 'DamagesNumber', 'Costaccident', 'VehiclesNumber'],
+          maxRecordCountFactor: 5
+        }).then(function(allResults) {
+          updateResultStats(allResults.features || []);
+        });
+      }
+
+      document.getElementById('btnpreiodFilter').addEventListener('click', function () {
+        ApplyPeriodFilter();
+      });
+
+      Promise.all(map.layers.map(function(layer) { return layer.when(); })).then(function () {
+        document.getElementById("loader").hidden = true;
+        document.getElementById("viewDiv").hidden = false;
+        document.getElementById("SearchCard").hidden = false;
+        ApplyPeriodFilter(2026);
+      });
+
+      // Build report-number suggestions for quick search.
+      AccidenPoints.queryFeatures({
+        where: "1=1",
+        outFields: ["ReportNumber"],
+        returnDistinctValues: true,
+        orderByFields: ["ReportNumber DESC"],
+        maxRecordCountFactor: 5
+      }).then(function (res) {
+        var list = document.getElementById('reportNumberList');
+        var values = (res.features || []).map(function (f) { return f.attributes.ReportNumber; }).filter(Boolean).slice(0, 1200);
+        list.innerHTML = values.map(function (v) { return '<option value="' + String(v).replace(/"/g, '&quot;') + '"></option>'; }).join('');
+      }).catch(function () {
+        // Ignore suggestions errors because search still works manually.
+      });
+    }
+
+    initMap();
+  });
+</script>
+</body>
+</html>
