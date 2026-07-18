@@ -271,6 +271,11 @@ td.num{font-family:'JetBrains Mono',monospace;}
 .list-compact li{display:flex;gap:8px;align-items:flex-start;}
 .list-compact li::before{content:"•";color:var(--amber);font-weight:700;margin-top:1px;}
 .tiny-list{font-size:12px;margin-top:8px;max-height:120px;overflow:auto;padding-right:2px;}
+.tiny-list{scrollbar-width:thin;scrollbar-color:rgba(255,176,32,.65) rgba(255,255,255,.06);}
+.tiny-list::-webkit-scrollbar{width:7px;height:7px;}
+.tiny-list::-webkit-scrollbar-track{background:rgba(255,255,255,.06);border-radius:10px;}
+.tiny-list::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,176,32,.9),rgba(229,81,79,.85));border-radius:10px;border:1px solid rgba(14,18,23,.6);}
+.tiny-list::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(255,196,80,.95),rgba(236,124,75,.9));}
 
 /* ---------- Future vision cards ---------- */
 .vision-badge{
