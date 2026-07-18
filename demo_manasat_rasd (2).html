@@ -352,7 +352,7 @@ footer p{font-size:12.5px;color:var(--text-faint);}
       <a href="#analysis">التحليل</a>
       <a href="#contracts">عقود الصيانة</a>
     </nav>
-    <div class="live-badge"><span class="pulse"></span> <span id="liveBadgeText">اتصال آني مباشر بقاعدة البيانات · 31,981 سجل</span></div>
+    <div class="live-badge"><span class="pulse"></span> <span id="liveBadgeText">ربط مباشر بقاعدة البيانات · 31,981 سجل</span></div>
   </div>
 </header>
 
@@ -496,7 +496,7 @@ footer p{font-size:12.5px;color:var(--text-faint);}
 
 <footer>
   <div class="wrap">
-    <p>المصدر: قاعدة البيانات الجغرافية الرسمية لإدارة السلامة، وزارة النقل والخدمات اللوجستية. جميع المؤشرات الواردة في هذا العرض محسوبة مباشرة من البيانات المعتمدة عبر اتصال مباشر بقاعدة البيانات.</p>
+    <p>المصدر: قاعدة البيانات الجغرافية الرسمية لإدارة السلامة، وزارة النقل والخدمات اللوجستية. جميع المؤشرات الواردة في هذا العرض محسوبة مباشرة من البيانات المعتمدة عبر ربط مباشر بقاعدة البيانات.</p>
     <p class="mono">النطاق الزمني: 2020-01-01 → 2026-06-11</p>
   </div>
 </footer>
@@ -540,7 +540,7 @@ const COLORS = { amber:'#FFB020', red:'#E5514F', green:'#33A17A', blue:'#4C8DC9'
   });
   const badge = document.getElementById('liveBadgeText');
   const chip = document.getElementById('lastSyncChip');
-  if(badge) badge.textContent = `اتصال آني مباشر بقاعدة البيانات · ${fmt(DASH.totals.accidents)} سجل`;
+  if(badge) badge.textContent = `ربط مباشر بقاعدة البيانات · ${fmt(DASH.totals.accidents)} سجل`;
   if(chip) chip.innerHTML = `آخر تحديث: <b>${stamp}</b>`;
 })();
 
