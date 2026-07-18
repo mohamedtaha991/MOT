@@ -8,8 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://js.arcgis.com/4.30/esri/themes/light/main.css">
-<link rel="stylesheet" href="MOT_App/GeoPortsal/WWWROOT/CSS/map/calcite.css">
-<link rel="stylesheet" href="MOT_App/GeoPortsal/WWWROOT/CSS/map.css">
 <style>
   :root {
     --bg:#0E1217;
@@ -33,6 +31,47 @@
     height: 100% !important;
     margin: 0;
     padding: 0;
+  }
+
+  #loader {
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+  }
+
+  .Legend-container {
+    position: absolute;
+    top: 80px;
+    left: 70px;
+    z-index: 25;
+    width: 350px;
+    max-height: 500px;
+    overflow: auto;
+    display: none;
+  }
+
+  .Basemap-container,
+  .Print-container {
+    position: absolute;
+    top: 80px;
+    left: 70px;
+    z-index: 25;
+    width: 500px;
+    max-height: 500px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .layer-list-container {
+    position: absolute;
+    top: 80px;
+    left: 70px;
+    z-index: 25;
+    width: 240px;
+    max-height: 500px;
+    overflow-y: auto;
+    text-align: right;
+    display: none;
   }
 
   body {
@@ -999,12 +1038,19 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
         ApplyPeriodFilter();
       });
 
-      Promise.all(map.layers.map(function(layer) { return layer.when(); })).then(function () {
-        document.getElementById("loader").hidden = true;
-        document.getElementById("viewDiv").hidden = false;
-        document.getElementById("SearchCard").hidden = false;
-        ApplyPeriodFilter(2026);
-      });
+      Promise.all(map.layers.map(function(layer) { return layer.when(); }))
+        .then(function () {
+          document.getElementById("loader").hidden = true;
+          document.getElementById("viewDiv").hidden = false;
+          document.getElementById("SearchCard").hidden = false;
+          ApplyPeriodFilter(2026);
+        })
+        .catch(function () {
+          // Fallback: show UI even if one layer fails on public host.
+          document.getElementById("loader").hidden = true;
+          document.getElementById("viewDiv").hidden = false;
+          document.getElementById("SearchCard").hidden = false;
+        });
 
       // Build report-number suggestions for quick search.
       AccidenPoints.queryFeatures({
