@@ -195,6 +195,42 @@
     margin-bottom: 0 !important;
   }
 
+  .widget-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .widget-head .Widget-title {
+    padding: 0 !important;
+    border-bottom: none !important;
+    margin: 0 !important;
+    font-size: 13px;
+  }
+
+  .widget-close {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: #11161D;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .widget-close:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
   .search-panel {
     background: linear-gradient(170deg, rgba(22,27,34,.96), rgba(28,35,44,.95)) !important;
     border: 1px solid var(--border) !important;
@@ -498,19 +534,31 @@
 <button class="action-button esri-icon-measure-line mapIcons" id="distanceButton" type="button" title="قياس الاطوال"></button>
 
 <div class="Legend-container widgetsBox" id="Legend-container">
-  <div class="Widget-title">مفتاح الخريطة</div>
+  <div class="widget-head">
+    <div class="Widget-title">مفتاح الخريطة</div>
+    <button id="closeLegend" class="widget-close" type="button" aria-label="إغلاق نافذة مفتاح الخريطة">×</button>
+  </div>
   <div id="LegendContainer"></div>
 </div>
 <div class="layer-list-container widgetsBox" id="layer-list-container">
-  <div class="Widget-title">طبقات الخريطة</div>
+  <div class="widget-head">
+    <div class="Widget-title">طبقات الخريطة</div>
+    <button id="closeLayerList" class="widget-close" type="button" aria-label="إغلاق نافذة طبقات الخريطة">×</button>
+  </div>
   <div id="layerListContainer" class="layerListContainer widgetsBox"></div>
 </div>
 <div class="Basemap-container widgetsBox" id="Basemap-container">
-  <div class="Widget-title">خرائط الاساس</div>
+  <div class="widget-head">
+    <div class="Widget-title">خرائط الاساس</div>
+    <button id="closeBasemap" class="widget-close" type="button" aria-label="إغلاق نافذة خرائط الأساس">×</button>
+  </div>
   <div id="BasemapContainer"></div>
 </div>
 <div class="Print-container widgetsBox" id="Print-container">
-  <div class="Widget-title">الطباعة</div>
+  <div class="widget-head">
+    <div class="Widget-title">الطباعة</div>
+    <button id="closePrint" class="widget-close" type="button" aria-label="إغلاق نافذة الطباعة">×</button>
+  </div>
   <div id="PrintContainer"></div>
 </div>
 
@@ -850,6 +898,59 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
         document.getElementById("Basemap-container").style.display = "none";
         document.getElementById("Print-container").style.display = "none";
       }
+
+      function bindCloseButton(buttonId) {
+        var btn = document.getElementById(buttonId);
+        if (!btn) return;
+        btn.addEventListener("click", function () {
+          HideAllWidgets();
+        });
+      }
+
+      bindCloseButton("closeLegend");
+      bindCloseButton("closeLayerList");
+      bindCloseButton("closeBasemap");
+      bindCloseButton("closePrint");
+
+      var widgetPanelIds = [
+        "layer-list-container",
+        "Legend-container",
+        "Basemap-container",
+        "Print-container"
+      ];
+
+      var widgetToggleButtonIds = [
+        "layersButton",
+        "LegedButton",
+        "BasemapButton",
+        "PrintButton"
+      ];
+
+      function isInsideAnyWidgetPanel(target) {
+        return widgetPanelIds.some(function (id) {
+          var el = document.getElementById(id);
+          return el && el.contains(target);
+        });
+      }
+
+      function isAnyWidgetToggleButton(target) {
+        return widgetToggleButtonIds.some(function (id) {
+          var btn = document.getElementById(id);
+          return btn && btn.contains(target);
+        });
+      }
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          HideAllWidgets();
+        }
+      });
+
+      document.addEventListener("click", function (event) {
+        if (isInsideAnyWidgetPanel(event.target)) return;
+        if (isAnyWidgetToggleButton(event.target)) return;
+        HideAllWidgets();
+      });
 
       document.getElementById("LegedButton").addEventListener("click", function() {
         HideAllWidgets();
