@@ -247,6 +247,13 @@ td.num{font-family:'JetBrains Mono',monospace;}
 .sev-pill{
   display:inline-block;padding:3px 10px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;
 }
+.alert-pill{
+  display:inline-block;padding:4px 10px;border-radius:20px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+}
+.alert-pill.normal{background:rgba(51,161,122,.16);color:#33A17A;}
+.alert-pill.warn{background:rgba(255,176,32,.16);color:#FFB020;}
+.alert-pill.critical{background:rgba(229,81,79,.16);color:#E5514F;}
 
 /* ---------- Future vision cards ---------- */
 .vision-badge{
@@ -359,6 +366,7 @@ footer p{font-size:12.5px;color:var(--text-faint);}
       <a href="#map-section">الخريطة</a>
       <a href="#analysis">التحليل</a>
       <a href="#contracts">عقود الصيانة</a>
+      <a href="#anomaly">الإنذار المبكر</a>
     </nav>
     <div class="live-badge"><span class="pulse"></span> <span id="liveBadgeText">مباشر: 31,981 سجل</span></div>
   </div>
@@ -497,6 +505,52 @@ footer p{font-size:12.5px;color:var(--text-faint);}
         </tr></thead>
         <tbody id="pbcTable"></tbody>
       </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="anomaly" style="padding:24px 0 72px;">
+  <div class="wrap">
+    <div class="eyebrow">كشف الشذوذ التشغيلي</div>
+    <h2 class="section-title">الإنذار المبكر لانحراف أداء المقاولين</h2>
+    <p class="section-sub">نسخة تشغيلية أولية مبنية على Z-score لمعدل الحوادث الشهري لكل عقد صيانة، لاكتشاف العقود التي بدأت تنحرف أعلى من الطبيعي.</p>
+
+    <div class="grid-3" style="margin-bottom:20px;">
+      <div class="panel">
+        <h3>عقود ضمن التنبيه</h3>
+        <p class="panel-sub">Z-score بين 2 و أقل من 3</p>
+        <div class="val mono" id="warnCount" style="font-size:34px;color:var(--amber);">—</div>
+      </div>
+      <div class="panel">
+        <h3>عقود حرجة</h3>
+        <p class="panel-sub">Z-score أكبر أو يساوي 3</p>
+        <div class="val mono" id="criticalCount" style="font-size:34px;color:var(--red);">—</div>
+      </div>
+      <div class="panel">
+        <h3>متوسط المعدل الشهري</h3>
+        <p class="panel-sub">حادث/شهر عبر كل العقود</p>
+        <div class="val mono" id="avgMonthlyRate" style="font-size:34px;color:var(--blue);">—</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h3>أعلى العقود انحرافًا</h3>
+        <p class="panel-sub">حسب Z-score لمعدل الحوادث الشهري</p>
+        <div class="chart-box"><canvas id="chartAnomaly"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>قائمة أولويات المتابعة</h3>
+        <p class="panel-sub">أعلى 6 عقود تتطلب متابعة تشغيلية</p>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th>العقد</th><th>معدل شهري</th><th>Z-score</th><th>مستوى التنبيه</th>
+            </tr></thead>
+            <tbody id="anomalyTable"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -911,6 +965,78 @@ new Chart(document.getElementById('chartIrap'), {
       <td><span class="sev-pill" style="background:${sevBg[c]};color:${sevText[c]}">${z.severityIndex}</span></td>
     </tr>`;
   }).join('');
+})();
+
+// ================= Anomaly detection (prototype) =================
+(function renderAnomaly(){
+  const monthsSpan = (() => {
+    const s = new Date(DASH.totals.startDate);
+    const e = new Date(DASH.totals.endDate);
+    return Math.max(1, (e.getFullYear()-s.getFullYear())*12 + (e.getMonth()-s.getMonth()) + 1);
+  })();
+
+  const rows = DASH.pbcBySeverity.map(z => {
+    const monthlyRate = z.count / monthsSpan;
+    return { ...z, monthlyRate };
+  });
+
+  const mean = rows.reduce((a,b)=>a+b.monthlyRate,0) / rows.length;
+  const variance = rows.reduce((a,b)=>a + Math.pow(b.monthlyRate - mean, 2),0) / rows.length;
+  const std = Math.sqrt(variance) || 1;
+
+  const scored = rows.map(r => {
+    const z = (r.monthlyRate - mean) / std;
+    const level = z >= 3 ? 'critical' : (z >= 2 ? 'warn' : 'normal');
+    return { ...r, zScore: z, level };
+  }).sort((a,b)=>b.zScore-a.zScore);
+
+  const top = scored.slice(0,6);
+  const warnCount = scored.filter(r => r.zScore >= 2 && r.zScore < 3).length;
+  const criticalCount = scored.filter(r => r.zScore >= 3).length;
+
+  document.getElementById('warnCount').textContent = warnCount;
+  document.getElementById('criticalCount').textContent = criticalCount;
+  document.getElementById('avgMonthlyRate').textContent = mean.toFixed(1);
+
+  const levelLabel = l => l==='critical' ? 'حرج' : (l==='warn' ? 'تنبيه' : 'طبيعي');
+  const levelClass = l => l==='critical' ? 'critical' : (l==='warn' ? 'warn' : 'normal');
+
+  document.getElementById('anomalyTable').innerHTML = top.map(r => `
+    <tr>
+      <td>${r.contract || '—'}</td>
+      <td class="num">${r.monthlyRate.toFixed(1)}</td>
+      <td class="num">${r.zScore.toFixed(2)}</td>
+      <td><span class="alert-pill ${levelClass(r.level)}">${levelLabel(r.level)}</span></td>
+    </tr>
+  `).join('');
+
+  new Chart(document.getElementById('chartAnomaly'), {
+    type:'bar',
+    data:{
+      labels: top.map(r => (r.contract || '—').slice(0,28) + ((r.contract || '').length>28 ? '…' : '')),
+      datasets:[{
+        label:'Z-score',
+        data: top.map(r => r.zScore),
+        backgroundColor: top.map(r => r.level==='critical' ? COLORS.red : (r.level==='warn' ? COLORS.amber : COLORS.green)),
+        borderRadius:5,
+        maxBarThickness:42
+      }]
+    },
+    options:{
+      indexAxis:'y',
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales: baseScales({
+        x:{
+          grid:{color:gridColor},
+          ticks:{color:tickColor},
+          title:{display:true,text:'Z-score',color:tickColor}
+        },
+        y:{ grid:{display:false}, ticks:{color:tickColor, font:{size:11}} }
+      })
+    }
+  });
 })();
 
 </script>
