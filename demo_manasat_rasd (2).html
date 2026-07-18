@@ -787,8 +787,8 @@ new Chart(document.getElementById('chartCause'), {
   data:{
     labels: DASH.causeStats.map(c=>c.label),
     datasets:[
-      { type:'bar', label:'عدد الحوادث', data: DASH.causeStats.map(c=>c.value), backgroundColor: COLORS.blue, borderRadius:4, yAxisID:'y' },
-      { type:'line', label:'النسبة التراكمية %', data: DASH.causeStats.map(c=>c.cumPct), borderColor: COLORS.amber, backgroundColor:COLORS.amber, tension:.3, yAxisID:'y1', pointRadius:4 }
+      { type:'bar', label:'عدد الحوادث', data: DASH.causeStats.map(c=>c.value), backgroundColor:'rgba(76,141,201,.68)', borderRadius:4, yAxisID:'y', order:1 },
+      { type:'line', label:'النسبة التراكمية %', data: DASH.causeStats.map(c=>c.cumPct), borderColor: COLORS.amber, backgroundColor:COLORS.amber, tension:.3, yAxisID:'y1', pointRadius:5, pointHoverRadius:6, pointBackgroundColor:COLORS.amber, pointBorderColor:'#0E1217', pointBorderWidth:2, order:99 }
     ]
   },
   options:{
