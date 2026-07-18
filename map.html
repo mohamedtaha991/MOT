@@ -137,9 +137,9 @@
   }
 
   .mapIcons {
-    color: var(--text) !important;
+    color: #A9B2BE !important;
     background: rgba(22,27,34,.9) !important;
-    border: 1px solid var(--border) !important;
+    border: 1px solid #3A4551 !important;
     border-radius: 10px !important;
     width: 35px !important;
     height: 35px !important;
@@ -151,11 +151,18 @@
   }
 
   .mapIcons:hover {
-    border-color: var(--amber) !important;
-    color: var(--amber) !important;
+    border-color: #566272 !important;
+    color: #D2D8E0 !important;
+    background: rgba(28,34,42,.98) !important;
   }
 
-  /* Fallback icons to ensure visibility even if Esri icon font fails */
+  .mapIcons.active {
+    border-color: #6A7788 !important;
+    color: #E1E6ED !important;
+    background: rgba(34,41,50,.98) !important;
+  }
+
+  /* Monochrome fallback icons if Esri icon font is unavailable */
   #layersButton::before,
   #LegedButton::before,
   #BasemapButton::before,
@@ -164,15 +171,16 @@
   #distanceButton::before {
     font-size: 15px;
     line-height: 1;
-    font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+    font-family: "Segoe UI Symbol", "Segoe UI", sans-serif;
+    color: inherit;
   }
 
-  #layersButton::before { content: "🗂"; }
-  #LegedButton::before { content: "🧭"; }
-  #BasemapButton::before { content: "🗺"; }
-  #PrintButton::before { content: "🖨"; }
-  #areaButton::before { content: "▧"; }
-  #distanceButton::before { content: "📏"; }
+  #layersButton::before { content: "≡"; }
+  #LegedButton::before { content: "◫"; }
+  #BasemapButton::before { content: "▦"; }
+  #PrintButton::before { content: "⎙"; }
+  #areaButton::before { content: "□"; }
+  #distanceButton::before { content: "↔"; }
 
   .widgetsBox,
   .Legend-container,
