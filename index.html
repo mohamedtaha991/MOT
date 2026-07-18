@@ -277,6 +277,10 @@ td.num{font-family:'JetBrains Mono',monospace;}
 .tiny-list::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,176,32,.9),rgba(229,81,79,.85));border-radius:10px;border:1px solid rgba(14,18,23,.6);}
 .tiny-list::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(255,196,80,.95),rgba(236,124,75,.9));}
 #hotspotMapProto{height:280px;width:100%;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#0b0e12;}
+.dbscan-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 12px;}
+.dbscan-controls label{font-size:12px;color:var(--text-faint);}
+.dbscan-controls select{min-width:180px;background:var(--bg-panel-2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:6px 10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12.5px;}
+.dbscan-mode-note{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);}
 
 /* ---------- Future vision cards ---------- */
 .vision-badge{
@@ -621,6 +625,15 @@ footer p{font-size:12.5px;color:var(--text-faint);}
       <div class="panel">
         <h3>DBSCAN Hotspots (أولية)</h3>
         <p class="panel-sub">تجميع آلي للعناقيد السوداء من شبكة كثافة الحوادث</p>
+        <div class="dbscan-controls">
+          <label for="dbscanModeSelect">مستوى الحساسية</label>
+          <select id="dbscanModeSelect" aria-label="مستوى حساسية DBSCAN">
+            <option value="sensitive">حساس</option>
+            <option value="balanced" selected>متوازن</option>
+            <option value="strict">صارم</option>
+          </select>
+          <span class="dbscan-mode-note" id="dbscanModeHint">الإعدادات: eps=0.22 | minPts=5 | minCount=15</span>
+        </div>
         <div id="hotspotMapProto"></div>
         <div style="overflow-x:auto;margin-top:12px;">
           <table>
@@ -1177,95 +1190,132 @@ new Chart(document.getElementById('chartIrap'), {
     }
   });
 
-  // ---- DBSCAN prototype on density grid
-  const eps = 0.22;
-  const minPts = 5;
-  const minCount = 15;
-  const pts = DENSITY_GRID.filter(p => p.count >= minCount).map((p,i)=>({ ...p, i }));
-  const labels = Array(pts.length).fill(undefined);
-  let clusterId = 0;
-
-  function dist(a,b){
-    const dx = a.lat - b.lat;
-    const dy = a.lon - b.lon;
-    return Math.sqrt(dx*dx + dy*dy);
-  }
-  function neighbors(idx){
-    const p = pts[idx];
-    const out = [];
-    for(let j=0;j<pts.length;j++) if(dist(p, pts[j]) <= eps) out.push(j);
-    return out;
-  }
-
-  for(let i=0;i<pts.length;i++){
-    if(labels[i] !== undefined) continue;
-    const nbs = neighbors(i);
-    if(nbs.length < minPts){ labels[i] = -1; continue; }
-    labels[i] = clusterId;
-    const queue = [...nbs];
-    while(queue.length){
-      const q = queue.shift();
-      if(labels[q] === -1) labels[q] = clusterId;
-      if(labels[q] !== undefined) continue;
-      labels[q] = clusterId;
-      const qNbs = neighbors(q);
-      if(qNbs.length >= minPts) queue.push(...qNbs);
-    }
-    clusterId++;
-  }
-
-  const clusters = new Map();
-  labels.forEach((cid, idx) => {
-    if(cid === -1 || cid === undefined) return;
-    if(!clusters.has(cid)) clusters.set(cid, []);
-    clusters.get(cid).push(pts[idx]);
-  });
-
-  const clusterRows = [...clusters.entries()].map(([cid, arr]) => {
-    const total = arr.reduce((s,p)=>s+p.count,0);
-    const weighted = arr.reduce((s,p)=>s+p.count,0) || 1;
-    const centerLat = arr.reduce((s,p)=>s + (p.lat * p.count),0) / weighted;
-    const centerLon = arr.reduce((s,p)=>s + (p.lon * p.count),0) / weighted;
-    return { cid: cid+1, points: arr.length, total, centerLat, centerLon };
-  }).sort((a,b)=>b.total-a.total);
-
-  const topClusters = clusterRows.slice(0,5);
+  // ---- DBSCAN prototype on density grid (with sensitivity control)
+  const dbscanModes = {
+    sensitive: { eps: 0.18, minPts: 4, minCount: 8 },
+    balanced: { eps: 0.22, minPts: 5, minCount: 15 },
+    strict: { eps: 0.28, minPts: 6, minCount: 25 }
+  };
+  const modeSelect = document.getElementById('dbscanModeSelect');
+  const modeHint = document.getElementById('dbscanModeHint');
+  const hotspotTable = document.getElementById('hotspotTable');
   const totalGridAcc = DENSITY_GRID.reduce((s,p)=>s+p.count,0) || 1;
-  document.getElementById('hotspotTable').innerHTML = topClusters.map(c => `
-    <tr>
-      <td class="num">C-${c.cid}</td>
-      <td class="num">${c.points}</td>
-      <td class="num">${fmt(c.total)}</td>
-      <td class="num">${((c.total/totalGridAcc)*100).toFixed(1)}%</td>
-    </tr>
-  `).join('');
+  let hotspotMap = null;
+  let hotspotLayer = null;
 
-  const hotspotMap = L.map('hotspotMapProto', {
-    center:[23.8,45.5],
-    zoom:5.3,
-    zoomControl:true,
-    attributionControl:false,
-    scrollWheelZoom:false
-  });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    subdomains:'abcd',
-    maxZoom:19
-  }).addTo(hotspotMap);
+  function ensureHotspotMap(){
+    if(hotspotMap) return;
+    hotspotMap = L.map('hotspotMapProto', {
+      center:[23.8,45.5],
+      zoom:5.3,
+      zoomControl:true,
+      attributionControl:false,
+      scrollWheelZoom:false
+    });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+      subdomains:'abcd',
+      maxZoom:19
+    }).addTo(hotspotMap);
+    hotspotLayer = L.layerGroup().addTo(hotspotMap);
+  }
 
-  const maxCluster = Math.max(...topClusters.map(c=>c.total),1);
-  const markers = topClusters.map(c => {
-    const ratio = c.total / maxCluster;
-    const color = ratio > 0.6 ? COLORS.red : (ratio > 0.3 ? '#EC7C4B' : COLORS.amber);
-    return L.circleMarker([c.centerLat, c.centerLon], {
-      radius: 8 + (ratio * 14),
-      color:'#0E1217',
-      weight:1.2,
-      fillColor: color,
-      fillOpacity:.86
-    }).bindPopup(`<b>العنقود C-${c.cid}</b><br>نقاط: ${c.points}<br>إجمالي الحوادث: ${fmt(c.total)}<br>المساهمة: ${((c.total/totalGridAcc)*100).toFixed(1)}%`);
-  });
-  const group = L.featureGroup(markers).addTo(hotspotMap);
-  if(markers.length){ hotspotMap.fitBounds(group.getBounds().pad(0.35)); }
+  function runDbscan(modeKey){
+    const cfg = dbscanModes[modeKey] || dbscanModes.balanced;
+    modeHint.textContent = `الإعدادات: eps=${cfg.eps} | minPts=${cfg.minPts} | minCount=${cfg.minCount}`;
+
+    const pts = DENSITY_GRID.filter(p => p.count >= cfg.minCount).map((p,i)=>({ ...p, i }));
+    const labels = Array(pts.length).fill(undefined);
+    let clusterId = 0;
+
+    function dist(a,b){
+      const dx = a.lat - b.lat;
+      const dy = a.lon - b.lon;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+    function neighbors(idx){
+      const p = pts[idx];
+      const out = [];
+      for(let j=0;j<pts.length;j++) if(dist(p, pts[j]) <= cfg.eps) out.push(j);
+      return out;
+    }
+
+    for(let i=0;i<pts.length;i++){
+      if(labels[i] !== undefined) continue;
+      const nbs = neighbors(i);
+      if(nbs.length < cfg.minPts){ labels[i] = -1; continue; }
+      labels[i] = clusterId;
+      const queue = [...nbs];
+      while(queue.length){
+        const q = queue.shift();
+        if(labels[q] === -1) labels[q] = clusterId;
+        if(labels[q] !== undefined) continue;
+        labels[q] = clusterId;
+        const qNbs = neighbors(q);
+        if(qNbs.length >= cfg.minPts) queue.push(...qNbs);
+      }
+      clusterId++;
+    }
+
+    const clusters = new Map();
+    labels.forEach((cid, idx) => {
+      if(cid === -1 || cid === undefined) return;
+      if(!clusters.has(cid)) clusters.set(cid, []);
+      clusters.get(cid).push(pts[idx]);
+    });
+
+    const clusterRows = [...clusters.entries()].map(([cid, arr]) => {
+      const total = arr.reduce((s,p)=>s+p.count,0);
+      const weighted = total || 1;
+      const centerLat = arr.reduce((s,p)=>s + (p.lat * p.count),0) / weighted;
+      const centerLon = arr.reduce((s,p)=>s + (p.lon * p.count),0) / weighted;
+      return { cid: cid+1, points: arr.length, total, centerLat, centerLon };
+    }).sort((a,b)=>b.total-a.total);
+
+    const topClusters = clusterRows.slice(0,5);
+    if(!topClusters.length){
+      hotspotTable.innerHTML = '<tr><td colspan="4" class="num">لا توجد عناقيد ضمن هذه الإعدادات</td></tr>';
+    } else {
+      hotspotTable.innerHTML = topClusters.map(c => `
+        <tr>
+          <td class="num">C-${c.cid}</td>
+          <td class="num">${c.points}</td>
+          <td class="num">${fmt(c.total)}</td>
+          <td class="num">${((c.total/totalGridAcc)*100).toFixed(1)}%</td>
+        </tr>
+      `).join('');
+    }
+
+    ensureHotspotMap();
+    hotspotLayer.clearLayers();
+
+    const maxCluster = Math.max(...topClusters.map(c=>c.total),1);
+    const markers = topClusters.map(c => {
+      const ratio = c.total / maxCluster;
+      const color = ratio > 0.6 ? COLORS.red : (ratio > 0.3 ? '#EC7C4B' : COLORS.amber);
+      return L.circleMarker([c.centerLat, c.centerLon], {
+        radius: 8 + (ratio * 14),
+        color:'#0E1217',
+        weight:1.2,
+        fillColor: color,
+        fillOpacity:.86
+      }).bindPopup(`<b>العنقود C-${c.cid}</b><br>نقاط: ${c.points}<br>إجمالي الحوادث: ${fmt(c.total)}<br>المساهمة: ${((c.total/totalGridAcc)*100).toFixed(1)}%`);
+    });
+
+    if(markers.length){
+      const group = L.featureGroup(markers).addTo(hotspotLayer);
+      hotspotMap.fitBounds(group.getBounds().pad(0.35));
+    } else {
+      hotspotMap.setView([23.8,45.5], 5.3);
+    }
+  }
+
+  if(modeSelect){
+    modeSelect.value = 'balanced';
+    modeSelect.addEventListener('change', () => runDbscan(modeSelect.value));
+    runDbscan(modeSelect.value);
+  } else {
+    runDbscan('balanced');
+  }
 })();
 
 </script>
