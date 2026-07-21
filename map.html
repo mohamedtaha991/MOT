@@ -90,6 +90,71 @@
     color: var(--text) !important;
   }
 
+  .gate-screen {
+    position: absolute;
+    inset: 0;
+    z-index: 120;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(9, 13, 18, .96);
+  }
+
+  .gate-card {
+    width: min(560px, 96vw);
+    background: linear-gradient(165deg, rgba(22,27,34,.98), rgba(28,35,44,.96));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 20px 36px rgba(0,0,0,.42);
+    text-align: right;
+  }
+
+  .gate-card h2 {
+    margin: 0 0 8px;
+    font-family: "Tajawal", "IBM Plex Sans Arabic", sans-serif;
+    font-size: 24px;
+    color: var(--text);
+  }
+
+  .gate-card p {
+    margin: 0 0 14px;
+    color: var(--text-muted);
+    line-height: 1.9;
+    font-size: 14px;
+  }
+
+  .gate-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .gate-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 800;
+    text-decoration: none;
+    border: 1px solid transparent;
+    font-family: "IBM Plex Sans Arabic", sans-serif;
+  }
+
+  .gate-btn.primary {
+    color: #14181e;
+    background: var(--amber);
+  }
+
+  .gate-btn.secondary {
+    color: var(--text);
+    border-color: var(--border);
+    background: transparent;
+  }
+
   .topbar {
     position: absolute;
     top: 14px;
@@ -530,6 +595,19 @@
 </head>
 <body>
 <calcite-loader id="loader" text="جاري تحميل الخريطة" active></calcite-loader>
+<div id="configGate" class="gate-screen" hidden>
+  <div class="gate-card">
+    <h2>مطلوب إعداد رابط ArcGIS</h2>
+    <p>
+      لا يمكن فتح التطبيق قبل حفظ رابط ArcGIS Online.
+      ادخل على صفحة الإعدادات وأضف الرابط أولًا، ثم ارجع للخريطة.
+    </p>
+    <div class="gate-actions">
+      <a class="gate-btn primary" href="arcgis_settings.html">⚙ فتح الإعدادات</a>
+      <a class="gate-btn secondary" href="index.html">العودة للرئيسية</a>
+    </div>
+  </div>
+</div>
 <div class="topbar">
   <strong>مستكشف الحوادث الجغرافي</strong>
   <a href="index.html">العودة للرئيسية</a>
@@ -758,6 +836,37 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
 </script>
  <script src="https://js.arcgis.com/4.30/"></script>
 <script>
+  var ARCGIS_URL_STORAGE_KEY = "mot.arcgis.online.url";
+
+  function getSavedArcGisUrl() {
+    try {
+      var v = (localStorage.getItem(ARCGIS_URL_STORAGE_KEY) || "").trim();
+      if (!v) return "";
+      return v.replace(/\/+$/, "");
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function showConfigGate() {
+    var gate = document.getElementById("configGate");
+    if (gate) {
+      gate.hidden = false;
+      gate.style.display = "flex";
+    }
+    var loader = document.getElementById("loader");
+    if (loader) {
+      loader.hidden = true;
+      loader.active = false;
+    }
+    var topbar = document.querySelector(".topbar");
+    if (topbar) topbar.style.display = "none";
+  }
+
+  if (!getSavedArcGisUrl()) {
+    showConfigGate();
+  }
+
   function togglePeriodDropdown(e) {
     e.preventDefault();
     var dropdown = document.getElementById('periodDropdown');
@@ -794,6 +903,7 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
     document.getElementById('stat-vehicles').innerText = Math.round(vehiclesSum).toLocaleString('ar-SA');
   }
 
+  if (getSavedArcGisUrl()) {
   require([
     "esri/intl", "esri/Map", "esri/Basemap", "esri/views/MapView", "esri/widgets/Home",
     "esri/widgets/Search", "esri/widgets/BasemapGallery", "esri/widgets/LayerList", "esri/layers/WebTileLayer",
@@ -1180,6 +1290,7 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
 
     initMap();
   });
+  }
 </script>
 </body>
 </html>
