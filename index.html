@@ -77,12 +77,25 @@ header{
   backdrop-filter:blur(10px);
   border-bottom:1px solid var(--border-soft);
 }
-header .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:64px;position:relative;}
 .brand{display:flex;align-items:center;gap:10px;font-family:'Tajawal',sans-serif;font-weight:800;font-size:19px;}
 .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 4px var(--amber-dim);}
 nav{display:flex;gap:28px;}
 nav a{color:var(--text-muted);text-decoration:none;font-size:14.5px;transition:color .15s;}
 nav a:hover{color:var(--amber);}
+.menu-toggle{
+  display:none;
+  border:1px solid var(--border);
+  background:var(--bg-panel);
+  color:var(--text);
+  padding:8px 12px;
+  border-radius:8px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+}
+.menu-toggle:hover{border-color:var(--amber);color:var(--amber);}
 .live-badge{
   display:flex;align-items:center;gap:7px;
   font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);
@@ -337,7 +350,29 @@ footer p{font-size:12.5px;color:var(--text-faint);}
   .status-row{margin-bottom:14px;}
   .grid-2,.grid-3{grid-template-columns:1fr;}
   .closing-grid{grid-template-columns:1fr;}
-  nav{display:none;}
+  .menu-toggle{display:inline-flex;align-items:center;justify-content:center;}
+  nav{
+    display:none;
+    position:absolute;
+    top:calc(100% + 10px);
+    right:0;
+    left:0;
+    flex-direction:column;
+    gap:4px;
+    padding:10px;
+    background:var(--bg-panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    box-shadow:0 14px 36px rgba(0,0,0,.35);
+  }
+  header.nav-open nav{display:flex;}
+  nav a{
+    display:block;
+    padding:9px 12px;
+    border-radius:7px;
+    font-size:14px;
+  }
+  nav a:hover{background:var(--amber-dim);}
 }
 @media(max-width:640px){
   .wrap{padding:0 16px;}
@@ -388,7 +423,8 @@ footer p{font-size:12.5px;color:var(--text-faint);}
 <header>
   <div class="wrap">
     <div class="brand"><span class="dot"></span> منصّة رصد <span style="color:var(--text-faint);font-weight:500;font-size:13px;">Road Safety Intelligence</span></div>
-    <nav>
+    <button class="menu-toggle" id="menuToggleBtn" type="button" aria-label="فتح القائمة" aria-expanded="false" aria-controls="topNav">☰ القائمة</button>
+    <nav id="topNav">
       <a href="#overview">لمحة عامة</a>
       <a href="#map-section">الخريطة</a>
       <a href="#analysis">التحليل</a>
@@ -1323,6 +1359,43 @@ new Chart(document.getElementById('chartIrap'), {
   }
 })();
 
+</script>
+<script>
+(function setupResponsiveMenu(){
+  const header = document.querySelector('header');
+  const nav = document.getElementById('topNav');
+  const toggleBtn = document.getElementById('menuToggleBtn');
+  if(!header || !nav || !toggleBtn) return;
+
+  function closeMenu(){
+    header.classList.remove('nav-open');
+    toggleBtn.setAttribute('aria-expanded','false');
+    toggleBtn.textContent = '☰ القائمة';
+  }
+
+  function toggleMenu(){
+    const isOpen = header.classList.toggle('nav-open');
+    toggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    toggleBtn.textContent = isOpen ? '✕ إغلاق' : '☰ القائمة';
+  }
+
+  toggleBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  nav.addEventListener('click', function(e){
+    if(e.target.closest('a')) closeMenu();
+  });
+
+  document.addEventListener('click', function(e){
+    if(!header.contains(e.target)) closeMenu();
+  });
+
+  window.addEventListener('resize', function(){
+    if(window.innerWidth > 920) closeMenu();
+  });
+})();
 </script>
 </body>
 </html>
