@@ -1,6 +1,38 @@
 ﻿define(["esri/layers/FeatureLayer", "esri/geometry/Polygon", "esri/identity/IdentityManager", "esri/Graphic", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/geometry/Multipoint"],
     function (FeatureLayer, Polygon, IdentityManager, Graphic, SimpleFillSymbol, SimpleLineSymbol, Multipoint) {
 
+        const ARCGIS_STORAGE_KEY_URL = "mot.arcgis.online.url";
+
+        function normalizeArcGisBase(raw) {
+            const val = String(raw || "").trim().replace(/\/+$/, "").replace(/\/query$/i, "");
+            if (!val) return "";
+            if (/\/(FeatureServer|MapServer)\/\d+$/i.test(val)) {
+                return val.replace(/\/\d+$/i, "");
+            }
+            if (/\/(FeatureServer|MapServer)$/i.test(val)) {
+                return val;
+            }
+            return "";
+        }
+
+        function getConfiguredArcGisBase() {
+            try {
+                const fromStorage = normalizeArcGisBase(localStorage.getItem(ARCGIS_STORAGE_KEY_URL));
+                if (fromStorage) return fromStorage;
+            } catch (_) {
+                // Ignore storage access errors.
+            }
+            return "";
+        }
+
+        function getArcGisLayerUrl(layerId) {
+            const base = getConfiguredArcGisBase();
+            if (!base) {
+                throw new Error("ArcGIS URL is not configured. Save it in arcgis_settings.html first.");
+            }
+            return base + "/" + layerId;
+        }
+
         return {
 
             // Initiat_AccidenPointss: async function () {
@@ -8,7 +40,7 @@
             // },
             Initiat_Accident_Points: async function () {
                 var AccidenPoints = new FeatureLayer({
-                    url: "https://services9.arcgis.com/1LMESIsvEbTzhwT2/arcgis/rest/services/Untitled/FeatureServer/0",
+                    url: getArcGisLayerUrl(0),
                     mode: FeatureLayer.MODE_ONDEMAND, // فقط البيانات في Extent الحالي
                     outFields: ["*"], // Fetch all
                 });
@@ -107,7 +139,7 @@
             },
             Initiat_AdministrationBoarder: async function () {
                 var Areas = new FeatureLayer({
-                    url: "https://services9.arcgis.com/1LMESIsvEbTzhwT2/arcgis/rest/services/Untitled/FeatureServer/2",
+                    url: getArcGisLayerUrl(2),
                     mode: FeatureLayer.MODE_ONDEMAND, // فقط البيانات في Extent الحالي
                     outFields: ["*"], // Fetch all
                 });
@@ -115,7 +147,7 @@
             },
             Initiat_Roads: async function () {
                 var Roads = new FeatureLayer({
-                    url: "https://services9.arcgis.com/1LMESIsvEbTzhwT2/arcgis/rest/services/Untitled/FeatureServer/1",
+                    url: getArcGisLayerUrl(1),
                     mode: FeatureLayer.MODE_ONDEMAND, // فقط البيانات في Extent الحالي
                     outFields: ["*"], // Fetch all
                 });
