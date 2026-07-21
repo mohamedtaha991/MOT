@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إعدادات ArcGIS Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1217;
+    --panel: #161b22;
+    --panel-2: #1c232c;
+    --border: #2a323c;
+    --text: #edf0f3;
+    --muted: #8b94a3;
+    --accent: #ffb020;
+    --ok: #33a17a;
+    --err: #e5514f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans Arabic", Tahoma, sans-serif;
+    background:
+      radial-gradient(ellipse 900px 450px at 80% -10%, rgba(255,176,32,.12), transparent 60%),
+      radial-gradient(ellipse 700px 450px at 10% 0%, rgba(76,141,201,.1), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+  }
+
+  .card {
+    width: min(860px, 100%);
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 16px 32px rgba(0,0,0,.35);
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-family: "Tajawal", sans-serif;
+    font-size: clamp(26px, 4vw, 34px);
+    line-height: 1.2;
+  }
+
+  .sub {
+    margin: 0 0 22px;
+    color: var(--muted);
+    line-height: 1.8;
+    font-size: 14px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  input[type="url"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    background: #11161d;
+    color: var(--text);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    font-family: "IBM Plex Sans Arabic", Tahoma, sans-serif;
+    direction: ltr;
+  }
+
+  input[type="url"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(255,176,32,.18);
+  }
+
+  .hint {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    direction: ltr;
+    text-align: left;
+  }
+
+  .actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  button, .link-btn {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: "IBM Plex Sans Arabic", Tahoma, sans-serif;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #15191f;
+  }
+
+  .btn-secondary {
+    border-color: var(--border);
+    background: transparent;
+    color: var(--text);
+  }
+
+  .btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .status {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-size: 13px;
+    display: none;
+  }
+
+  .status.show { display: block; }
+  .status.ok { color: #bde8d7; background: rgba(51,161,122,.14); border-color: rgba(51,161,122,.35); }
+  .status.err { color: #f1b8b7; background: rgba(229,81,79,.14); border-color: rgba(229,81,79,.35); }
+
+  .saved {
+    margin-top: 18px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .saved code {
+    color: #d8e0eb;
+    direction: ltr;
+    display: inline-block;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>إعداد رابط ArcGIS Online</h1>
+    <p class="sub">
+      أدخل رابط خدمة ArcGIS Online الخاصة بك (FeatureServer أو MapServer)،
+      وسيتم حفظه محليًا في المتصفح لاستخدامه داخل النظام.
+    </p>
+
+    <div class="field">
+      <label for="arcgisUrl">رابط ArcGIS Online</label>
+      <input id="arcgisUrl" type="url" placeholder="https://servicesX.arcgis.com/.../FeatureServer/0" autocomplete="off">
+      <p class="hint">مثال: https://services9.arcgis.com/xxxxx/arcgis/rest/services/MyLayer/FeatureServer/0</p>
+    </div>
+
+    <div class="actions">
+      <button id="saveBtn" class="btn-primary" type="button">حفظ الإعداد</button>
+      <button id="clearBtn" class="btn-secondary" type="button">مسح الرابط</button>
+      <a class="link-btn btn-secondary" href="index.html">الرجوع للرئيسية</a>
+    </div>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+
+    <div class="saved">
+      <div>القيمة المحفوظة حاليًا:</div>
+      <code id="currentValue">لا يوجد رابط محفوظ</code>
+    </div>
+  </main>
+
+<script>
+  const STORAGE_KEY = "mot.arcgis.online.url";
+
+  const urlInput = document.getElementById("arcgisUrl");
+  const saveBtn = document.getElementById("saveBtn");
+  const clearBtn = document.getElementById("clearBtn");
+  const statusBox = document.getElementById("status");
+  const currentValue = document.getElementById("currentValue");
+
+  function normalizeUrl(v) {
+    return String(v || "").trim().replace(/\/+$/, "");
+  }
+
+  function showStatus(type, message) {
+    statusBox.className = "status show " + type;
+    statusBox.textContent = message;
+  }
+
+  function refreshCurrent() {
+    try {
+      const saved = normalizeUrl(localStorage.getItem(STORAGE_KEY) || "");
+      currentValue.textContent = saved || "لا يوجد رابط محفوظ";
+      if (!urlInput.value && saved) {
+        urlInput.value = saved;
+      }
+    } catch (_) {
+      currentValue.textContent = "تعذر قراءة localStorage";
+    }
+  }
+
+  function isArcGisUrlValid(v) {
+    if (!v) return false;
+    try {
+      const u = new URL(v);
+      if (!["http:", "https:"].includes(u.protocol)) return false;
+      return /arcgis\/rest\/services\//i.test(u.pathname);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  saveBtn.addEventListener("click", function () {
+    const value = normalizeUrl(urlInput.value);
+    if (!isArcGisUrlValid(value)) {
+      showStatus("err", "الرابط غير صالح. تأكد أنه رابط ArcGIS REST Service صحيح.");
+      return;
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY, value);
+      showStatus("ok", "تم حفظ رابط ArcGIS بنجاح.");
+      refreshCurrent();
+    } catch (_) {
+      showStatus("err", "تعذر حفظ الإعدادات في المتصفح.");
+    }
+  });
+
+  clearBtn.addEventListener("click", function () {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      urlInput.value = "";
+      showStatus("ok", "تم مسح الرابط المحفوظ.");
+      refreshCurrent();
+    } catch (_) {
+      showStatus("err", "تعذر مسح الإعدادات.");
+    }
+  });
+
+  refreshCurrent();
+</script>
+</body>
+</html>
