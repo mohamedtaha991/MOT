@@ -176,6 +176,47 @@
 
   /* ===== Map ===== */
   .map-wrap{ position:relative; min-height:0; }
+  .forecast-toolbar{
+    background: var(--panel-2);
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius);
+    padding:10px;
+  }
+  .forecast-toolbar .title{
+    font-size:11.5px;
+    color:var(--text-muted);
+    margin-bottom:7px;
+  }
+  .forecast-hours{
+    display:flex;
+    gap:7px;
+    overflow-x:auto;
+    padding-bottom:2px;
+  }
+  .forecast-hours::-webkit-scrollbar{height:6px;}
+  .forecast-hours::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+  .forecast-hour-btn{
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text-muted);
+    border-radius:8px;
+    padding:6px 9px;
+    min-width:78px;
+    text-align:center;
+    font-family:'IBM Plex Sans Arabic', sans-serif;
+    font-size:11.5px;
+    line-height:1.4;
+    cursor:pointer;
+    transition:all .15s ease;
+    flex:0 0 auto;
+  }
+  .forecast-hour-btn b{display:block;color:var(--text);font-weight:600;}
+  .forecast-hour-btn.active{
+    border-color:var(--accent);
+    background:var(--accent-dim);
+    color:#bfe0ff;
+  }
+  .forecast-hour-btn.active b{color:#d8ecff;}
   #map{ width:100%; height:100%; background:#0a0e13; }
   .leaflet-popup-content-wrapper{
     background: #10161d; color: var(--text); border:1px solid var(--border); border-radius:10px;
@@ -208,6 +249,7 @@
   @media (max-width: 860px){
     .main{ grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
     .sidebar{ border-left:none; border-bottom:1px solid var(--border); max-height:40vh; }
+    .forecast-hour-btn{min-width:74px;font-size:11px;padding:6px 8px;}
   }
 </style>
 </head>
@@ -239,6 +281,14 @@
           <span id="live-btn-text">⚡ تحديث الطقس الآن</span>
         </button>
         <div class="weather-readout" id="weather-readout"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title"><span>توقع 12 ساعة</span><span class="ln"></span></div>
+        <div class="forecast-toolbar">
+          <div class="title">اختر الساعة المتوقعة لتحديث سيناريو الخطورة</div>
+          <div class="forecast-hours" id="forecast-hours"></div>
+        </div>
       </div>
 
       <div class="section">
@@ -297,8 +347,13 @@ const REGIONS = {"type":"FeatureCollection","features":[{"type":"Feature","prope
 
 const COLORS = { 'منخفض': '#2fb170', 'متوسط': '#e0a930', 'عالي': '#e2483d' };
 const WEATHER_NAMES = {1:'صحو', 2:'ممطر', 3:'عاصفة رملية', 4:'ضباب'};
+const FORECAST_HOURS = 12;
+const FORECAST_REQUEST_HOURS = FORECAST_HOURS + 1; // نطلب ساعة حالية + 12 ساعة قادمة
 
 let liveWeatherByRoad = null;    // خريطة RoadNumber -> weatherCode الفعلي الآن (Open-Meteo)
+let forecastWeatherByRoad = null; // خريطة RoadNumber -> مصفوفة 12 حالة طقس مستقبلية (+1h..+12h)
+let selectedForecastHourIndex = 0; // 0 => +1h
+let forecastHourLabels = Array.from({length: FORECAST_HOURS}, (_, i) => `+${i + 1}س`);
 
 const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([24.5, 45.0], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png', {
@@ -400,8 +455,45 @@ async function initRoadsFromArcGIS(){
 
 
 function weatherForRoad(rn){
+  if(forecastWeatherByRoad && forecastWeatherByRoad[rn] && forecastWeatherByRoad[rn][selectedForecastHourIndex] != null){
+    return forecastWeatherByRoad[rn][selectedForecastHourIndex];
+  }
   if(liveWeatherByRoad && liveWeatherByRoad[rn] != null) return liveWeatherByRoad[rn];
   return 1; // قبل اكتمال أول جلب حي، نفترض حالة صحو مؤقتًا
+}
+
+function formatHourLabelFromIso(isoText, idx){
+  try{
+    const d = new Date(isoText);
+    if(Number.isNaN(d.getTime())) throw new Error('invalid date');
+    const hh = d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+    return `+${idx + 1}س` + '\n' + hh;
+  }catch(_){
+    return `+${idx + 1}س`;
+  }
+}
+
+function renderForecastButtons(){
+  const host = document.getElementById('forecast-hours');
+  if(!host) return;
+  host.innerHTML = '';
+
+  for(let i=0;i<FORECAST_HOURS;i++){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'forecast-hour-btn' + (i === selectedForecastHourIndex ? ' active' : '');
+    btn.dataset.hourIndex = String(i);
+
+    const parts = String(forecastHourLabels[i] || `+${i + 1}س`).split('\n');
+    btn.innerHTML = `<b>${parts[0] || `+${i + 1}س`}</b><span>${parts[1] || ''}</span>`;
+
+    btn.addEventListener('click', ()=>{
+      selectedForecastHourIndex = i;
+      renderForecastButtons();
+      drawRoads();
+    });
+    host.appendChild(btn);
+  }
 }
 
 function scoreClass(props, w){
@@ -503,7 +595,7 @@ async function fetchWithTimeout(url, ms){
 async function fetchWeatherChunk(feats, retries = 2, timeoutMs = 8000){
   const lats = feats.map(f=>f.properties.clat).join(',');
   const lons = feats.map(f=>f.properties.clon).join(',');
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=weather_code,wind_speed_10m&timezone=auto`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&current=weather_code,wind_speed_10m&hourly=weather_code,wind_speed_10m&forecast_hours=${FORECAST_REQUEST_HOURS}&timezone=auto`;
 
   let lastErr;
   for(let attempt = 0; attempt <= retries; attempt++){
@@ -560,9 +652,11 @@ async function fetchLiveWeather(){
   }
 
   const newLive = {};
+  const newForecast = {};
   let counts = {1:0,2:0,3:0,4:0};
   let okCount = 0, failCount = 0;
   let lastError = null;
+  let firstTimeline = null;
 
   results.forEach((r, ci)=>{
     const feats = chunks[ci];
@@ -575,6 +669,21 @@ async function fetchLiveWeather(){
         const w = mapWeatherCode(code, wind);
         newLive[f.properties.RoadNumber] = w;
         counts[w]++;
+
+        const times = d?.hourly?.time || [];
+        const hourlyCodes = d?.hourly?.weather_code || [];
+        const hourlyWinds = d?.hourly?.wind_speed_10m || [];
+        const roadForecast = [];
+        for(let h=1; h<=FORECAST_HOURS; h++){
+          const fcCode = hourlyCodes[h] ?? code;
+          const fcWind = hourlyWinds[h] ?? wind;
+          roadForecast.push(mapWeatherCode(fcCode, fcWind));
+        }
+        newForecast[f.properties.RoadNumber] = roadForecast;
+
+        if(!firstTimeline && times.length > FORECAST_HOURS){
+          firstTimeline = times.slice(1, FORECAST_HOURS + 1);
+        }
       });
     } else {
       failCount += feats.length;
@@ -583,11 +692,30 @@ async function fetchLiveWeather(){
       feats.forEach(f=>{
         const prev = liveWeatherByRoad ? liveWeatherByRoad[f.properties.RoadNumber] : null;
         newLive[f.properties.RoadNumber] = prev ?? 1;
+
+        const prevForecast = forecastWeatherByRoad ? forecastWeatherByRoad[f.properties.RoadNumber] : null;
+        newForecast[f.properties.RoadNumber] = Array.isArray(prevForecast) && prevForecast.length === FORECAST_HOURS
+          ? prevForecast
+          : Array.from({length: FORECAST_HOURS}, ()=> (prev ?? 1));
       });
     }
   });
 
   liveWeatherByRoad = newLive;
+  forecastWeatherByRoad = newForecast;
+
+  if(firstTimeline){
+    forecastHourLabels = firstTimeline.map((t, i)=>formatHourLabelFromIso(t, i));
+  } else {
+    const now = new Date();
+    forecastHourLabels = Array.from({length: FORECAST_HOURS}, (_, i)=>{
+      const d = new Date(now.getTime() + (i + 1) * 60 * 60 * 1000);
+      const hh = d.toLocaleTimeString('ar-SA', {hour:'2-digit', minute:'2-digit'});
+      return `+${i + 1}س` + '\n' + hh;
+    });
+  }
+
+  renderForecastButtons();
   drawRoads();
 
   if(failCount === 0){
@@ -610,6 +738,7 @@ async function fetchLiveWeather(){
 
 document.getElementById('live-weather-btn').addEventListener('click', fetchLiveWeather);
 
+renderForecastButtons();
 drawRoads();          // رسم أولي سريع من البيانات المحلية (حالة صحو افتراضية) ريثما يصل الطقس الفعلي وهندسة ArcGIS
 initRoadsFromArcGIS(); // استبدال هندسة الطرق بالبيانات القادمة من خدمة ArcGIS (مع الإبقاء على إحصائيات الخطورة المحلية)
 fetchLiveWeather();   // جلب الطقس الحي تلقائيًا فور فتح الصفحة
@@ -641,21 +770,52 @@ window.fetch = async function(resource, init) {
     // التحقق مما إذا كان الطلب موجهاً لخدمة Open-Meteo
     if (typeof resource === 'string' && resource.includes('open-meteo.com')) {
         console.log("✅ تم استخدام بيانات طقس آمنة (محاكاة) لضمان استقرار العرض");
+
+        let pointCount = 1;
+        try{
+          const u = new URL(resource);
+          const latList = (u.searchParams.get('latitude') || '').split(',').filter(Boolean);
+          const lonList = (u.searchParams.get('longitude') || '').split(',').filter(Boolean);
+          pointCount = Math.max(latList.length, lonList.length, 1);
+        }catch(_){ /* no-op */ }
+
+        const now = new Date();
+        const hourTimes = Array.from({length: FORECAST_REQUEST_HOURS}, (_, h)=>{
+          const d = new Date(now.getTime() + h * 60 * 60 * 1000);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2,'0');
+          const day = String(d.getDate()).padStart(2,'0');
+          const hh = String(d.getHours()).padStart(2,'0');
+          return `${y}-${m}-${day}T${hh}:00`;
+        });
+
+        const weatherCycle = [0, 2, 3, 45, 61, 1, 63, 0, 48, 80, 3, 0, 95];
+        function mockForPoint(i){
+          const hourlyCodes = hourTimes.map((_, h)=>weatherCycle[(i + h) % weatherCycle.length]);
+          const hourlyWinds = hourTimes.map((_, h)=>10 + ((i * 3 + h * 4) % 36));
+          return {
+            current: {
+              weather_code: hourlyCodes[0],
+              wind_speed_10m: hourlyWinds[0]
+            },
+            hourly: {
+              time: hourTimes,
+              weather_code: hourlyCodes,
+              wind_speed_10m: hourlyWinds
+            }
+          };
+        }
+
+        const payload = pointCount === 1
+          ? mockForPoint(0)
+          : Array.from({length: pointCount}, (_, i)=>mockForPoint(i));
         
         // إرجاع استجابة مطابقة تماماً لما يتوقعه الكود الأصلي من Open-Meteo
         return Promise.resolve({
             ok: true,
             status: 200,
             statusText: "OK",
-            json: async () => ({
-                current_weather: {
-                    temperature: 24.5,       // درجة حرارة واقعية وثابتة
-                    weathercode: 0,          // 0 = سماء صافية (مشمس)
-                    windspeed: 12.0,         // سرعة رياح طبيعية
-                    winddirection: 90,       // اتجاه الرياح
-                    is_day: 1                // نهار
-                }
-            })
+            json: async () => payload
         });
     }
     
