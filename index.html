@@ -474,37 +474,6 @@ body.app-locked #homeConfigGate{
 </head>
 <body>
 
-<div id="homeConfigGate" hidden>
-  <div class="home-gate-card">
-    <h2>لا يمكن فتح الرئيسية قبل الإعداد</h2>
-    <p>
-      لازم يتم حفظ رابط ArcGIS Online أولًا من صفحة الإعدادات،
-      وبعدها الصفحة الرئيسية هتفتح بشكل طبيعي.
-    </p>
-    <div class="home-gate-actions">
-      <a class="home-gate-btn primary" href="arcgis_settings.html">⚙ فتح صفحة الإعدادات</a>
-      <a class="home-gate-btn secondary" href="map.html">فتح صفحة الخريطة</a>
-    </div>
-  </div>
-</div>
-
-<script>
-(function () {
-  var storageKey = 'mot.arcgis.online.url';
-  var saved = '';
-  try {
-    saved = (localStorage.getItem(storageKey) || '').trim();
-  } catch (_) {
-    saved = '';
-  }
-  if (!saved) {
-    document.body.classList.add('app-locked');
-    var gate = document.getElementById('homeConfigGate');
-    if (gate) gate.hidden = false;
-  }
-})();
-</script>
-
 <header>
   <div class="wrap">
     <div class="brand"><span class="dot"></span> منصّة رصد <span style="color:var(--text-faint);font-weight:500;font-size:13px;">Road Safety Intelligence</span></div>
@@ -518,7 +487,6 @@ body.app-locked #homeConfigGate{
       <a href="#predictive">تنبؤي</a> -->
       <a href="road_safety_dashboard.html">رادار سلامة الطرق</a>
       <a href="map.html">مستكشف ArcGIS</a>
-      <a href="arcgis_settings.html" title="إعدادات ArcGIS Online">⚙ إعداد ArcGIS</a>
     </nav>
     <div class="live-badge"><span class="pulse"></span> <span id="liveBadgeText">مباشر: 31,981 سجل</span></div>
   </div>

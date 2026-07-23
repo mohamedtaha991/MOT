@@ -1,36 +1,10 @@
 ﻿define(["esri/layers/FeatureLayer", "esri/geometry/Polygon", "esri/identity/IdentityManager", "esri/Graphic", "esri/symbols/SimpleFillSymbol", "esri/symbols/SimpleLineSymbol", "esri/geometry/Multipoint"],
     function (FeatureLayer, Polygon, IdentityManager, Graphic, SimpleFillSymbol, SimpleLineSymbol, Multipoint) {
 
-        const ARCGIS_STORAGE_KEY_URL = "mot.arcgis.online.url";
-
-        function normalizeArcGisBase(raw) {
-            const val = String(raw || "").trim().replace(/\/+$/, "").replace(/\/query$/i, "");
-            if (!val) return "";
-            if (/\/(FeatureServer|MapServer)\/\d+$/i.test(val)) {
-                return val.replace(/\/\d+$/i, "");
-            }
-            if (/\/(FeatureServer|MapServer)$/i.test(val)) {
-                return val;
-            }
-            return "";
-        }
-
-        function getConfiguredArcGisBase() {
-            try {
-                const fromStorage = normalizeArcGisBase(localStorage.getItem(ARCGIS_STORAGE_KEY_URL));
-                if (fromStorage) return fromStorage;
-            } catch (_) {
-                // Ignore storage access errors.
-            }
-            return "";
-        }
+        const ARCGIS_FEATURE_SERVICE_BASE_URL = "https://services9.arcgis.com/1LMESIsvEbTzhwT2/arcgis/rest/services/Untitled/FeatureServer";
 
         function getArcGisLayerUrl(layerId) {
-            const base = getConfiguredArcGisBase();
-            if (!base) {
-                throw new Error("ArcGIS URL is not configured. Save it in arcgis_settings.html first.");
-            }
-            return base + "/" + layerId;
+            return ARCGIS_FEATURE_SERVICE_BASE_URL + "/" + layerId;
         }
 
         return {

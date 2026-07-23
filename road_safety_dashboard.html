@@ -303,45 +303,12 @@
 </style>
 </head>
 <body>
-<div class="gate-screen" id="configGate" hidden>
-  <div class="gate-card">
-    <h2>مطلوب إعداد رابط ArcGIS</h2>
-    <p>لا يمكن تشغيل رادار سلامة الطرق قبل حفظ رابط ArcGIS Online من صفحة الإعدادات.</p>
-    <div class="gate-actions">
-      <a class="gate-btn primary" href="arcgis_settings.html">⚙ فتح الإعدادات</a>
-      <a class="gate-btn secondary" href="index.html">العودة للرئيسية</a>
-    </div>
-  </div>
-</div>
 <div class="app">
   <div class="topbar">
     <div class="brand">
       <div class="mark"></div>
       <div>
         <h1>رادار سلامة الطرق</h1>
-      <script>
-      (function(){
-        const key = 'mot.arcgis.online.url';
-        const normalize = (raw) => String(raw || '').trim().replace(/\/+$/,'').replace(/\/query$/i,'');
-        const resolveLayerUrl = (raw) => {
-          const base = normalize(raw);
-          if(!base) return '';
-          if(/\/(FeatureServer|MapServer)\/\d+$/i.test(base)) return base;
-          if(/\/(FeatureServer|MapServer)$/i.test(base)) return `${base}/1`;
-          return '';
-        };
-
-        const configuredUrl = resolveLayerUrl(localStorage.getItem(key));
-        window.__MOT_ARCGIS_SERVICE_URL = configuredUrl;
-        window.__MOT_HAS_ARCGIS_CONFIG = !!configuredUrl;
-
-        if(!window.__MOT_HAS_ARCGIS_CONFIG){
-          document.body.classList.add('app-locked');
-          const gate = document.getElementById('configGate');
-          if(gate) gate.hidden = false;
-        }
-      })();
-      </script>
 
         <p>نموذج تنبؤي لخطورة الطرق — إدارة السلامة، وزارة النقل</p>
       </div>
@@ -438,10 +405,6 @@ let forecastWeatherByRoad = null; // خريطة RoadNumber -> مصفوفة 12 ح
 let selectedForecastHourIndex = 0; // 0 => +1h
 let forecastHourLabels = Array.from({length: FORECAST_HOURS}, (_, i) => `+${i + 1}س`);
 
-if(!window.__MOT_HAS_ARCGIS_CONFIG){
-  throw new Error('ArcGIS URL is not configured. Open arcgis_settings.html first.');
-}
-
 const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([24.5, 45.0], 6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_matter/{z}/{x}/{y}{r}.png', {
   maxZoom: 18, subdomains: 'abcd'
@@ -458,7 +421,7 @@ ROADS.features.forEach(f => { ROADS_META[f.properties.RoadNumber] = f.properties
 const ROADS_LOCAL = ROADS; // نسخة احتياطية كاملة (هندسة + بيانات) في حال فشل ArcGIS
 
 // ===== إعدادات خدمة ArcGIS FeatureServer =====
-const ARCGIS_SERVICE_URL = window.__MOT_ARCGIS_SERVICE_URL;
+const ARCGIS_SERVICE_URL = 'https://services9.arcgis.com/1LMESIsvEbTzhwT2/arcgis/rest/services/Untitled/FeatureServer/1';
 const ARCGIS_TOKEN = 'AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcUia736qKCfE1DKPstGroaQf3qJetC9WM_n6hpRP3ELZk9e96EpkhDZyokSN3f4troYa3RDoGI59qPWZ3HzXV-KlSDO-UtbALbpV76oGuPbYAYBYqwjfnwxd2Uzqgjz0I-WTW_DUkxHaZVR9WM3_JBmSUzhg5f0L45ilImQg4VTrx5NsYI9sXB6dwg19N9Bwyzxn5IxbKHfecBOnMPIuQDhvRpWRgT3gKq4PRgNWIHI8iFgqB3kTfOhO22gglnqFCJX1OLgAU46H8A.AT1_FX23TRQR';
 
 async function fetchArcGISFeatures(){

@@ -428,123 +428,7 @@
     gap: 8px;
   }
 
-  .period-dropdown-row.year-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-
   .period-label-text { font-size: 12px; font-weight: 700; color: var(--text-muted); min-width: 38px; }
-
-  .period-dropdown-row.year-row .period-label-text {
-    min-width: 0;
-  }
-
-  .year-multiselect-wrapper { position: relative; flex: 1; width: 100%; }
-
-  .year-multi-toggle {
-    font-family: "IBM Plex Sans Arabic", sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    text-align: right;
-    background: #10151C;
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 8px;
-    padding: 7px 10px;
-    font-size: 12.5px;
-    cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .year-multi-toggle::after {
-    content: "▾";
-    color: var(--text-faint);
-    font-size: 11px;
-    margin-inline-start: 8px;
-    flex-shrink: 0;
-  }
-
-  .year-multi-toggle:hover { border-color: #566272; }
-
-  .year-multi-list {
-    display: none;
-    position: absolute;
-    top: calc(100% + 5px);
-    right: 0;
-    left: 0;
-    background: #10151C;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px;
-    max-height: min(42vh, 300px);
-    overflow-y: auto;
-    z-index: 30;
-    box-shadow: 0 10px 18px rgba(0,0,0,.35);
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255,176,32,.75) rgba(255,255,255,.08);
-  }
-
-  .year-multi-list.open { display: block; }
-
-  .year-multi-list::-webkit-scrollbar { width: 8px; }
-
-  .year-multi-list::-webkit-scrollbar-track {
-    background: rgba(255,255,255,.06);
-    border-radius: 999px;
-  }
-
-  .year-multi-list::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(255,176,32,.95), rgba(208,138,27,.9));
-    border-radius: 999px;
-  }
-
-  .year-multi-list::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(255,191,68,1), rgba(221,150,34,1));
-  }
-
-  .year-option {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 12.5px;
-    line-height: 1.5;
-    color: var(--text);
-    padding: 7px 8px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  .year-option:hover {
-    color: var(--amber);
-    background: rgba(255,176,32,.08);
-  }
-
-  .year-option input[type="checkbox"] {
-    accent-color: var(--amber);
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
-  }
-
-  .year-option-all { font-weight: 700; }
-
-  .year-option-all {
-    position: sticky;
-    top: -8px;
-    background: #10151C;
-    z-index: 1;
-  }
-
-  .year-option-sep {
-    border: none;
-    border-top: 1px solid var(--border-soft);
-    margin: 4px 0;
-  }
 
   .period-apply-btn {
     font-family: "IBM Plex Sans Arabic", sans-serif;
@@ -616,46 +500,6 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 5px;
     margin-top: 6px;
-  }
-
-  #statsPanel {
-    position: relative;
-    min-height: 86px;
-  }
-
-  .stats-loader {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 6px;
-    background: rgba(16, 21, 28, .72);
-    backdrop-filter: blur(2px);
-    border-radius: 9px;
-    z-index: 5;
-  }
-
-  #statsPanel.is-loading .stats-loader { display: flex; }
-
-  .stats-loader-spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(255,255,255,.2);
-    border-top-color: var(--amber);
-    border-radius: 50%;
-    animation: stats-spin .75s linear infinite;
-  }
-
-  .stats-loader-text {
-    font-size: 10.5px;
-    color: var(--text-muted);
-    font-weight: 700;
-  }
-
-  @keyframes stats-spin {
-    to { transform: rotate(360deg); }
   }
 
   .stat-card {
@@ -746,10 +590,6 @@
     }
 
     .stats-scroll-area { max-height: 130px; }
-
-    .year-multi-list {
-      max-height: min(34vh, 260px);
-    }
   }
 </style>
 </head>
@@ -804,24 +644,18 @@
       <span class="period-arrow" id="periodArrow">&#9660;</span>
     </a>
     <div id="periodDropdown" class="period-dropdown">
-      <div class="period-dropdown-row year-row">
+      <div class="period-dropdown-row">
         <label class="period-label-text">السنة</label>
-        <div class="year-multiselect-wrapper" id="yearMultiWrapper">
-          <button type="button" id="yearMultiToggle" class="year-multi-toggle">كل السنوات</button>
-          <div id="yearMultiList" class="year-multi-list">
-            <label class="year-option year-option-all">
-              <input type="checkbox" id="yearAllCheckbox" checked> كل السنوات
-            </label>
-            <hr class="year-option-sep">
-            <label class="year-option"><input type="checkbox" class="year-checkbox" value="2020"> 2020</label>
-            <label class="year-option"><input type="checkbox" class="year-checkbox" value="2021"> 2021</label>
-            <label class="year-option"><input type="checkbox" class="year-checkbox" value="2022"> 2022</label>
-            <label class="year-option"><input type="checkbox" class="year-checkbox" value="2023"> 2023</label>
-            <label class="year-option"><input type="checkbox" class="year-checkbox" value="2024"> 2024</label>
-            <label class="year-option"><input type="checkbox" class="year-checkbox" value="2025"> 2025</label>
-            <label class="year-option"><input type="checkbox" class="year-checkbox" value="2026"> 2026</label>
-          </div>
-        </div>
+        <select id="YearSelect" class="period-select">
+          <option value="">كل السنوات</option>
+          <option value="2020">2020</option>
+          <option value="2021">2021</option>
+          <option value="2022">2022</option>
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+        </select>
       </div>
       <div class="period-dropdown-row">
         <label class="period-label-text">الشهر</label>
@@ -962,10 +796,6 @@
   <div class="stats-scroll-area">
     <div id="search-lable"></div>
     <div id="statsPanel">
-      <div class="stats-loader" id="statsLoader" aria-live="polite" aria-label="جاري تحديث الإحصائيات">
-        <div class="stats-loader-spinner"></div>
-        <div class="stats-loader-text">جاري تحديث الإحصائيات...</div>
-      </div>
       <div class="stats-grid">
         <div class="stat-card stat-total"><div class="stat-value" id="stat-total">—</div><div class="stat-label">إجمالي الحوادث</div></div>
         <div class="stat-card stat-dead"><div class="stat-value" id="stat-dead">—</div><div class="stat-label">الوفيات</div></div>
@@ -1010,24 +840,15 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
     }
   });
 
-  function toSafeNumber(value) {
-    if (value === null || value === undefined || value === "") return 0;
-    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-    var normalized = String(value).replace(/[\s,،]/g, '');
-    var parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-
   function updateResultStats(features) {
     var total = features.length;
     var deadSum = 0, injuriesSum = 0, damagesSum = 0, costSum = 0, vehiclesSum = 0;
     features.forEach(function(f) {
-      var attrs = (f && f.attributes) || {};
-      deadSum += toSafeNumber(attrs.DeadNumber);
-      injuriesSum += toSafeNumber(attrs.InjuriesNumber);
-      damagesSum += toSafeNumber(attrs.DamagesNumber);
-      costSum += toSafeNumber(attrs.Costaccident);
-      vehiclesSum += toSafeNumber(attrs.VehiclesNumber);
+      deadSum += (f.attributes.DeadNumber || 0);
+      injuriesSum += (f.attributes.InjuriesNumber || 0);
+      damagesSum += (f.attributes.DamagesNumber || 0);
+      costSum += (f.attributes.Costaccident || 0);
+      vehiclesSum += (f.attributes.VehiclesNumber || 0);
     });
 
     document.getElementById('stat-total').innerText = total.toLocaleString('ar-SA');
@@ -1036,15 +857,6 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
     document.getElementById('stat-damages').innerText = Math.round(damagesSum).toLocaleString('ar-SA');
     document.getElementById('stat-cost').innerText = Math.round(costSum).toLocaleString('ar-SA');
     document.getElementById('stat-vehicles').innerText = Math.round(vehiclesSum).toLocaleString('ar-SA');
-  }
-
-  function renderStatsFromValues(total, deadSum, injuriesSum, damagesSum, costSum, vehiclesSum) {
-    document.getElementById('stat-total').innerText = Math.round(total || 0).toLocaleString('ar-SA');
-    document.getElementById('stat-dead').innerText = Math.round(deadSum || 0).toLocaleString('ar-SA');
-    document.getElementById('stat-injuries').innerText = Math.round(injuriesSum || 0).toLocaleString('ar-SA');
-    document.getElementById('stat-damages').innerText = Math.round(damagesSum || 0).toLocaleString('ar-SA');
-    document.getElementById('stat-cost').innerText = Math.round(costSum || 0).toLocaleString('ar-SA');
-    document.getElementById('stat-vehicles').innerText = Math.round(vehiclesSum || 0).toLocaleString('ar-SA');
   }
 
   require([
@@ -1058,7 +870,6 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
   ) {
     async function initMap() {
       var PeriodwhereClause = '1=1';
-      var statsLoadingCounter = 0;
       intl.setLocale("ar");
 
       const googleLayer = new WebTileLayer({
@@ -1085,82 +896,6 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
       map.add(AdministrationBorder);
       map.add(Roads);
       map.add(AccidenPoints);
-
-      function setStatsLoading(isLoading) {
-        var panel = document.getElementById('statsPanel');
-        if (!panel) return;
-        if (isLoading) {
-          statsLoadingCounter += 1;
-        } else {
-          statsLoadingCounter = Math.max(0, statsLoadingCounter - 1);
-        }
-        panel.classList.toggle('is-loading', statsLoadingCounter > 0);
-      }
-
-      async function updateStatsForWhere(whereClause) {
-        setStatsLoading(true);
-        var countQuery = AccidenPoints.createQuery();
-        countQuery.where = whereClause || "1=1";
-
-        try {
-          var total = await AccidenPoints.queryFeatureCount(countQuery);
-
-          var oidQuery = AccidenPoints.createQuery();
-          oidQuery.where = whereClause || "1=1";
-          var objectIds = await AccidenPoints.queryObjectIds(oidQuery);
-
-          if (!objectIds || objectIds.length === 0) {
-            renderStatsFromValues(total, 0, 0, 0, 0, 0);
-            return;
-          }
-
-          var deadSum = 0;
-          var injuriesSum = 0;
-          var damagesSum = 0;
-          var costSum = 0;
-          var vehiclesSum = 0;
-          var chunkSize = 800;
-
-          for (var i = 0; i < objectIds.length; i += chunkSize) {
-            var chunk = objectIds.slice(i, i + chunkSize);
-            var chunkQuery = AccidenPoints.createQuery();
-            chunkQuery.objectIds = chunk;
-            chunkQuery.returnGeometry = false;
-            chunkQuery.outFields = ['DeadNumber', 'InjuriesNumber', 'DamagesNumber', 'Costaccident', 'VehiclesNumber'];
-
-            var chunkRes = await AccidenPoints.queryFeatures(chunkQuery);
-            var chunkFeatures = (chunkRes && chunkRes.features) || [];
-
-            chunkFeatures.forEach(function (f) {
-              var attrs = (f && f.attributes) || {};
-              deadSum += toSafeNumber(attrs.DeadNumber);
-              injuriesSum += toSafeNumber(attrs.InjuriesNumber);
-              damagesSum += toSafeNumber(attrs.DamagesNumber);
-              costSum += toSafeNumber(attrs.Costaccident);
-              vehiclesSum += toSafeNumber(attrs.VehiclesNumber);
-            });
-          }
-
-          renderStatsFromValues(
-            total,
-            deadSum,
-            injuriesSum,
-            damagesSum,
-            costSum,
-            vehiclesSum
-          );
-        } catch (_) {
-          // Fallback in case object-id paging fails for this service.
-          var fallbackResults = await AccidenPoints.queryFeatures({
-            where: whereClause || "1=1",
-            outFields: ['DeadNumber', 'InjuriesNumber', 'DamagesNumber', 'Costaccident', 'VehiclesNumber'],
-            maxRecordCountFactor: 5
-          });
-          updateResultStats((fallbackResults && fallbackResults.features) || []);
-        } finally {
-          setStatsLoading(false);
-        }
-      }
 
       const view = new MapView({
         map,
@@ -1345,70 +1080,6 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
         setActiveWidget(this.classList.contains("active") ? null : "area");
       });
 
-      // --- Year multi-select dropdown logic (keeps same filtering pipeline as before) ---
-      var yearMultiToggle = document.getElementById('yearMultiToggle');
-      var yearMultiList = document.getElementById('yearMultiList');
-      var yearAllCheckbox = document.getElementById('yearAllCheckbox');
-      var yearCheckboxes = Array.prototype.slice.call(document.querySelectorAll('.year-checkbox'));
-
-      yearMultiToggle.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        yearMultiList.classList.toggle('open');
-      });
-
-      // Clicking anywhere outside the year list (but still inside the page) closes just the year list.
-      document.addEventListener('click', function (e) {
-        if (!yearMultiList.contains(e.target) && e.target !== yearMultiToggle) {
-          yearMultiList.classList.remove('open');
-        }
-      });
-
-      // Prevent clicks inside the list from bubbling up and closing the whole period dropdown.
-      yearMultiList.addEventListener('click', function (e) {
-        e.stopPropagation();
-      });
-
-      function getSelectedYears() {
-        return yearCheckboxes
-          .filter(function (cb) { return cb.checked; })
-          .map(function (cb) { return parseInt(cb.value, 10); });
-      }
-
-      function setSelectedYears(years) {
-        yearCheckboxes.forEach(function (cb) {
-          cb.checked = years.indexOf(parseInt(cb.value, 10)) !== -1;
-        });
-        yearAllCheckbox.checked = years.length === 0;
-        updateYearToggleLabel();
-      }
-
-      function updateYearToggleLabel() {
-        var selected = getSelectedYears();
-        if (selected.length === 0) {
-          yearMultiToggle.innerText = 'كل السنوات';
-        } else if (selected.length === 1) {
-          yearMultiToggle.innerText = String(selected[0]);
-        } else {
-          yearMultiToggle.innerText = selected.length + ' سنوات محددة';
-        }
-      }
-
-      yearAllCheckbox.addEventListener('change', function () {
-        if (this.checked) {
-          yearCheckboxes.forEach(function (cb) { cb.checked = false; });
-        }
-        updateYearToggleLabel();
-      });
-
-      yearCheckboxes.forEach(function (cb) {
-        cb.addEventListener('change', function () {
-          if (this.checked) yearAllCheckbox.checked = false;
-          if (getSelectedYears().length === 0) yearAllCheckbox.checked = true;
-          updateYearToggleLabel();
-        });
-      });
-
       const Region_graphicsLayer = new GraphicsLayer();
       map.add(Region_graphicsLayer);
       Region_graphicsLayer.listMode = "hide";
@@ -1449,11 +1120,10 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
         var reportNo = document.getElementById('autocomplete').value.trim();
 
         if (reportNo) {
-          var reportWhere = "ReportNumber='" + reportNo.replace(/'/g, "''") + "'";
-          AccidenPoints.definitionExpression = reportWhere;
-          updateStatsForWhere(reportWhere);
+          AccidenPoints.definitionExpression = "ReportNumber='" + reportNo.replace(/'/g, "''") + "'";
           AccidenPoints.queryFeatures().then(function (results) {
             var features = results.features || [];
+            updateResultStats(features);
             if (features.length > 0) {
               view.goTo({ target: features[0].geometry, zoom: 15 });
               view.popup.open({ features: [features[0]], location: features[0].geometry });
@@ -1467,7 +1137,7 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
         AccidenPoints.queryFeatures().then(function (results) {
           var features = results.features || [];
           document.getElementById('search-lable').style.display = 'block';
-          updateStatsForWhere(query);
+          updateResultStats(features);
           if (features.length > 0) view.goTo(features.map(function (f) { return f.geometry; }));
         });
       });
@@ -1488,12 +1158,18 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
         document.getElementById('search-lable').style.display = 'none';
 
         AccidenPoints.definitionExpression = PeriodwhereClause;
-        updateStatsForWhere(PeriodwhereClause);
+        AccidenPoints.queryFeatures({
+          where: PeriodwhereClause,
+          outFields: ['DeadNumber', 'InjuriesNumber', 'DamagesNumber', 'Costaccident', 'VehiclesNumber'],
+          maxRecordCountFactor: 5
+        }).then(function(allResults) {
+          updateResultStats(allResults.features || []);
+        });
       });
 
       function ApplyPeriodFilter(year) {
-        if (year) setSelectedYears([parseInt(year, 10)]);
-        var years = getSelectedYears(); // array, e.g. [] = كل السنوات, [2024], or [2024,2025,...]
+        var yearVal = year || document.getElementById('YearSelect').value;
+        if (year) document.getElementById('YearSelect').value = year;
 
         var month = document.getElementById('MonthSelect').value;
         var monthNames = {
@@ -1501,26 +1177,21 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
           '7':'يوليو','8':'أغسطس','9':'سبتمبر','10':'أكتوبر','11':'نوفمبر','12':'ديسمبر'
         };
 
-        var yearLabel = years.length === 0 ? 'كل السنوات'
-          : years.length === 1 ? String(years[0])
-          : years.join('، ');
-        var label = yearLabel + ' — ' + (month ? monthNames[month] : 'كل الأشهر');
+        var label = (yearVal || 'كل السنوات') + ' — ' + (month ? monthNames[month] : 'كل الأشهر');
         document.getElementById('periodLabel').innerText = label;
         document.getElementById('periodDropdown').classList.remove('open');
         document.getElementById('periodArrow').classList.remove('open');
 
-        if (years.length && month) {
-          var m = parseInt(month, 10);
+        if (yearVal && month) {
+          var y = parseInt(yearVal, 10), m = parseInt(month, 10);
           var nextMonth = m === 12 ? 1 : m + 1;
-          var rangeClauses = years.map(function (y) {
-            var nextYear = m === 12 ? y + 1 : y;
-            var startStr = y + '-' + String(m).padStart(2, '0') + '-01 00:00:00';
-            var endStr = nextYear + '-' + String(nextMonth).padStart(2, '0') + '-01 00:00:00';
-            return "(AccidentDate >= date '" + startStr + "' AND AccidentDate < date '" + endStr + "')";
-          });
-          PeriodwhereClause = rangeClauses.join(' OR ');
-        } else if (years.length) {
-          PeriodwhereClause = "EXTRACT(YEAR FROM AccidentDate) IN (" + years.join(',') + ")";
+          var nextYear = m === 12 ? y + 1 : y;
+          var startStr = y + '-' + String(m).padStart(2, '0') + '-01 00:00:00';
+          var endStr = nextYear + '-' + String(nextMonth).padStart(2, '0') + '-01 00:00:00';
+          PeriodwhereClause = "AccidentDate >= date '" + startStr + "' AND AccidentDate < date '" + endStr + "'";
+        } else if (yearVal) {
+          var yy = parseInt(yearVal, 10);
+          PeriodwhereClause = "AccidentDate >= date '" + yy + "-01-01 00:00:00' AND AccidentDate < date '" + (yy + 1) + "-01-01 00:00:00'";
         } else if (month) {
           PeriodwhereClause = "EXTRACT(MONTH FROM AccidentDate) = " + parseInt(month, 10);
         } else {
@@ -1529,7 +1200,13 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
 
         AccidenPoints.definitionExpression = PeriodwhereClause;
         document.getElementById('search-lable').style.display = 'block';
-        updateStatsForWhere(PeriodwhereClause);
+        AccidenPoints.queryFeatures({
+          where: PeriodwhereClause,
+          outFields: ['DeadNumber', 'InjuriesNumber', 'DamagesNumber', 'Costaccident', 'VehiclesNumber'],
+          maxRecordCountFactor: 5
+        }).then(function(allResults) {
+          updateResultStats(allResults.features || []);
+        });
       }
 
       document.getElementById('btnpreiodFilter').addEventListener('click', function () {
