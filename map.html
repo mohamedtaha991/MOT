@@ -1013,7 +1013,35 @@ var esriConfig = { apiKey: "AAPTa8-bcSL3uLq1GlNDVbtEtWQ..KEfP4FGrBRc-OYhMyV9SvcU
   function toSafeNumber(value) {
     if (value === null || value === undefined || value === "") return 0;
     if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-    var normalized = String(value).replace(/[\s,،]/g, '');
+    var normalized = String(value)
+      .replace(/[\u0660-\u0669]/g, function (d) { return String(d.charCodeAt(0) - 1632); })
+      .replace(/[\u06F0-\u06F9]/g, function (d) { return String(d.charCodeAt(0) - 1776); })
+      .replace(/[−–—]/g, '-')
+      .replace(/[\s\u00A0]/g, '')
+      .replace(/(ر\.س|ريال|sar|SAR)/g, '')
+      .replace(/[^0-9.,-]/g, '');
+
+    if (!normalized) return 0;
+
+    var lastDot = normalized.lastIndexOf('.');
+    var lastComma = normalized.lastIndexOf(',');
+    var decimalIndex = Math.max(lastDot, lastComma);
+
+    if (decimalIndex > -1) {
+      var intPart = normalized.slice(0, decimalIndex).replace(/[.,]/g, '');
+      var fracPart = normalized.slice(decimalIndex + 1).replace(/[.,]/g, '');
+      normalized = intPart + (fracPart ? '.' + fracPart : '');
+    } else {
+      normalized = normalized.replace(/[.,]/g, '');
+    }
+
+    if ((normalized.match(/-/g) || []).length > 1) {
+      normalized = normalized.replace(/-/g, '');
+    }
+
+    if (normalized.indexOf('-') > 0) {
+      normalized = normalized.replace(/-/g, '');
+    }
     var parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : 0;
   }
